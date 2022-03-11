@@ -22,30 +22,38 @@ pub fn main() !void {
 
     window.setFramebufferSizeCallback(framebufferSizeCallback);
 
-    const shader_program = blk: {
-        const vertex_shader = gl.createShader(.vertex);
-        defer vertex_shader.delete();
-        vertex_shader.source(1, &.{@embedFile("triangle.vert")});
-        vertex_shader.compile();
-        if (vertex_shader.get(.compile_status) == 0) return error.ShaderCompilationError;
+    const vertex_shader = gl.createShader(.vertex);
+    vertex_shader.source(1, &.{@embedFile("triangle.vert")});
+    vertex_shader.compile();
+    if (vertex_shader.get(.compile_status) == 0) return error.ShaderCompilationError;
 
-        const fragment_shader = gl.createShader(.fragment);
-        defer fragment_shader.delete();
-        fragment_shader.source(1, &.{@embedFile("triangle.frag")});
-        fragment_shader.compile();
-        if (fragment_shader.get(.compile_status) == 0) return error.ShaderCompilationError;
+    const fragment_shader1 = gl.createShader(.fragment);
+    fragment_shader1.source(1, &.{@embedFile("triangle1.frag")});
+    fragment_shader1.compile();
+    if (fragment_shader1.get(.compile_status) == 0) return error.ShaderCompilationError;
 
-        const program = gl.createProgram();
-        errdefer program.delete();
-        program.attach(vertex_shader);
-        program.attach(fragment_shader);
-        program.link();
+    const fragment_shader2 = gl.createShader(.fragment);
+    fragment_shader2.source(1, &.{@embedFile("triangle2.frag")});
+    fragment_shader2.compile();
+    if (fragment_shader2.get(.compile_status) == 0) return error.ShaderCompilationError;
 
-        if (program.get(.link_status) == 0) return error.ProgramLinkError;
+    const program1 = gl.createProgram();
+    defer program1.delete();
+    program1.attach(vertex_shader);
+    program1.attach(fragment_shader1);
+    program1.link();
+    if (program1.get(.link_status) == 0) return error.ProgramLinkError;
 
-        break :blk program;
-    };
-    defer shader_program.delete();
+    const program2 = gl.createProgram();
+    defer program2.delete();
+    program2.attach(vertex_shader);
+    program2.attach(fragment_shader2);
+    program2.link();
+    if (program2.get(.link_status) == 0) return error.ProgramLinkError;
+
+    vertex_shader.delete();
+    fragment_shader1.delete();
+    fragment_shader2.delete();
 
     const vertices = [_]f32{
         -0.75, -0.25, 0.0,
@@ -79,8 +87,10 @@ pub fn main() !void {
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true });
 
-        shader_program.use();
+        program1.use();
         gl.drawArrays(.triangles, 0, 3);
+
+        program2.use();
         gl.drawArrays(.triangles, 3, 3);
 
         try window.swapBuffers();
