@@ -1,49 +1,44 @@
 const std = @import("std");
-const panic = std.debug.panic;
-
-// TODO: Switch to zig API once we know more
+const glfw = @import("glfw");
 const c = @cImport({
     @cInclude("glad/glad.h");
-    @cInclude("GLFW/glfw3.h");
 });
 
-pub fn main() void {
-    if (c.glfwInit() == 0)
-        panic("GLFW Init failed", .{});
-    defer c.glfwTerminate();
+pub fn main() !void {
+    try glfw.init(.{});
+    defer glfw.terminate();
 
-    c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MAJOR, 3);
-    c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MINOR, 3);
-    c.glfwWindowHint(c.GLFW_OPENGL_PROFILE, c.GLFW_OPENGL_CORE_PROFILE);
+    const window = try glfw.Window.create(800, 600, "Learn OpenGL", null, null, .{
+        .context_version_major = 3,
+        .context_version_minor = 3,
+        .opengl_profile = .opengl_core_profile,
+    });
+    defer window.destroy();
 
-    const window = c.glfwCreateWindow(800, 600, "Learn OpenGL", null, null) orelse
-        panic("Create window failed", .{});
+    try glfw.makeContextCurrent(window);
 
-    c.glfwMakeContextCurrent(window);
+    // Maybe there's a way to make this cleaner
+    if (c.gladLoadGLLoader(@ptrCast(fn ([*c]const u8) callconv(.C) ?*anyopaque, glfw.getProcAddress)) == 0)
+        return error.GladLoadError;
 
-    if (c.gladLoadGLLoader(@ptrCast(fn ([*c]const u8) callconv(.C) ?*anyopaque, c.glfwGetProcAddress)) == 0)
-        panic("GLAD Loading failed", .{});
-
-    _ = c.glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-
-    while (c.glfwWindowShouldClose(window) == 0) {
-        // input
+    window.setFramebufferSizeCallback(framebufferSizeCallback);
+    while (!window.shouldClose()) {
         processInput(window);
 
         c.glClearColor(0.2, 0.3, 0.3, 1.0);
         c.glClear(c.GL_COLOR_BUFFER_BIT);
 
-        // events and swap buffers
-        c.glfwPollEvents();
-        c.glfwSwapBuffers(window);
+        try glfw.pollEvents();
+        try window.swapBuffers();
     }
 }
 
-fn processInput(window: *c.GLFWwindow) void {
-    if (c.glfwGetKey(window, c.GLFW_KEY_ESCAPE) == c.GLFW_PRESS)
-        c.glfwSetWindowShouldClose(window, c.GLFW_TRUE);
+fn processInput(window: glfw.Window) void {
+    if (window.getKey(.escape) == .press) {
+        window.setShouldClose(true);
+    }
 }
 
-fn framebufferSizeCallback(_: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.C) void {
-    c.glViewport(0, 0, width, height);
+fn framebufferSizeCallback(_: glfw.Window, width: u32, height: u32) void {
+    c.glViewport(0, 0, @intCast(c_int, width), @intCast(c_int, height));
 }

@@ -16,7 +16,6 @@ pub fn build(b: *std.build.Builder) void {
     exe.setTarget(target);
     exe.setBuildMode(mode);
 
-    exe.addIncludeDir("lib/mach-glfw/upstream/glfw/include");
     exe.addIncludeDir("lib/glad/include");
     exe.addCSourceFile("lib/glad/src/glad.c", &.{});
 
