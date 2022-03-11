@@ -80,8 +80,7 @@ pub fn main() !void {
         gl.clear(.{ .color = true });
 
         shader_program.use();
-        gl.drawArrays(.triangles, 0, 3);
-        gl.drawArrays(.triangles, 3, 3);
+        gl.drawArrays(.triangles, 0, 6);
 
         try window.swapBuffers();
         try glfw.pollEvents();
