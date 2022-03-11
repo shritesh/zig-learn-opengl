@@ -48,14 +48,13 @@ pub fn main() !void {
     defer shader_program.delete();
 
     const vertices = [_]f32{
-        0.5, 0.5, 0.0, // top right
-        0.5, -0.5, 0.0, // bottom right
-        -0.5, -0.5, 0.0, // bottom left
-        -0.5, 0.5, 0.0, // top left
-    };
-    const indices = [_]u32{
-        0, 1, 3, // first
-        1, 2, 3, // second
+        -0.75, -0.25, 0.0,
+        -0.25, -0.25, 0.0,
+        -0.5,  0.5,   0.0,
+
+        0,     -0.25, 0.0,
+        0.5,   -0.25, 0.0,
+        0.25,  0.5,   0.0,
     };
 
     const vao = gl.genVertexArray();
@@ -64,16 +63,10 @@ pub fn main() !void {
     const vbo = gl.genBuffer();
     defer vbo.delete();
 
-    const ebo = gl.genBuffer();
-    defer ebo.delete();
-
     vao.bind();
 
     vbo.bind(.array_buffer);
     gl.bufferData(.array_buffer, f32, &vertices, .static_draw);
-
-    ebo.bind(.element_array_buffer);
-    gl.bufferData(.element_array_buffer, u32, &indices, .static_draw);
 
     gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
     gl.enableVertexAttribArray(0);
@@ -87,7 +80,8 @@ pub fn main() !void {
         gl.clear(.{ .color = true });
 
         shader_program.use();
-        gl.drawElements(.triangles, 6, .u32, 0);
+        gl.drawArrays(.triangles, 0, 3);
+        gl.drawArrays(.triangles, 3, 3);
 
         try window.swapBuffers();
         try glfw.pollEvents();
