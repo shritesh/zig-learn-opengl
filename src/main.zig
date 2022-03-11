@@ -27,57 +27,61 @@ pub fn main() !void {
     vertex_shader.compile();
     if (vertex_shader.get(.compile_status) == 0) return error.ShaderCompilationError;
 
-    const fragment_shader1 = gl.createShader(.fragment);
-    fragment_shader1.source(1, &.{@embedFile("triangle1.frag")});
-    fragment_shader1.compile();
-    if (fragment_shader1.get(.compile_status) == 0) return error.ShaderCompilationError;
+    var fragment_shaders: [2]gl.Shader = undefined;
+    inline for (.{ @embedFile("triangle1.frag"), @embedFile("triangle2.frag") }) |src, i| {
+        fragment_shaders[i] = gl.createShader(.fragment);
+        fragment_shaders[i].source(1, &.{src});
+        fragment_shaders[i].compile();
+        if (fragment_shaders[i].get(.compile_status) == 0) return error.ShaderCompilationError;
+    }
 
-    const fragment_shader2 = gl.createShader(.fragment);
-    fragment_shader2.source(1, &.{@embedFile("triangle2.frag")});
-    fragment_shader2.compile();
-    if (fragment_shader2.get(.compile_status) == 0) return error.ShaderCompilationError;
-
-    const program1 = gl.createProgram();
-    defer program1.delete();
-    program1.attach(vertex_shader);
-    program1.attach(fragment_shader1);
-    program1.link();
-    if (program1.get(.link_status) == 0) return error.ProgramLinkError;
-
-    const program2 = gl.createProgram();
-    defer program2.delete();
-    program2.attach(vertex_shader);
-    program2.attach(fragment_shader2);
-    program2.link();
-    if (program2.get(.link_status) == 0) return error.ProgramLinkError;
+    var programs: [2]gl.Program = undefined;
+    for (programs) |*program, i| {
+        program.* = gl.createProgram();
+        errdefer program.delete();
+        program.attach(vertex_shader);
+        program.attach(fragment_shaders[i]);
+        program.link();
+        if (program.get(.link_status) == 0) return error.ProgramLinkError;
+    }
 
     vertex_shader.delete();
-    fragment_shader1.delete();
-    fragment_shader2.delete();
+    for (fragment_shaders) |fragment_shader| {
+        fragment_shader.delete();
+    }
+    defer {
+        for (programs) |program| {
+            program.delete();
+        }
+    }
 
-    const vertices = [_]f32{
+    const vertices = [2][9]f32{ .{
         -0.75, -0.25, 0.0,
         -0.25, -0.25, 0.0,
         -0.5,  0.5,   0.0,
+    }, .{
+        0,    -0.25, 0.0,
+        0.5,  -0.25, 0.0,
+        0.25, 0.5,   0.0,
+    } };
 
-        0,     -0.25, 0.0,
-        0.5,   -0.25, 0.0,
-        0.25,  0.5,   0.0,
-    };
+    var vaos: [2]gl.VertexArray = undefined;
+    gl.genVertexArrays(&vaos);
+    defer gl.deleteVertexArrays(&vaos);
 
-    const vao = gl.genVertexArray();
-    defer vao.delete();
+    var vbos: [2]gl.Buffer = undefined;
+    gl.genBuffers(&vbos);
+    defer gl.deleteBuffers(&vbos);
 
-    const vbo = gl.genBuffer();
-    defer vbo.delete();
+    for (vaos) |vao, i| {
+        vao.bind();
 
-    vao.bind();
+        vbos[i].bind(.array_buffer);
+        gl.bufferData(.array_buffer, f32, &vertices[i], .static_draw);
 
-    vbo.bind(.array_buffer);
-    gl.bufferData(.array_buffer, f32, &vertices, .static_draw);
-
-    gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
-    gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
+        gl.enableVertexAttribArray(0);
+    }
 
     if (wireframe_mode) gl.polygonMode(.front_and_back, .line);
 
@@ -87,11 +91,11 @@ pub fn main() !void {
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true });
 
-        program1.use();
-        gl.drawArrays(.triangles, 0, 3);
-
-        program2.use();
-        gl.drawArrays(.triangles, 3, 3);
+        for (programs) |program, i| {
+            program.use();
+            vaos[i].bind();
+            gl.drawArrays(.triangles, 0, 3);
+        }
 
         try window.swapBuffers();
         try glfw.pollEvents();
