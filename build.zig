@@ -17,7 +17,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.setBuildMode(mode);
 
     exe.addIncludeDir("lib/glad/include");
-    exe.addCSourceFile("lib/glad/src/glad.c", &.{});
+    exe.addCSourceFile("lib/glad/src/gl.c", &.{});
 
     exe.install();
 
