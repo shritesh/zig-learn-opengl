@@ -1,6 +1,6 @@
 const std = @import("std");
 const glfw = @import("glfw");
-const gl = @import("./zgl/zgl.zig");
+const gl = @import("zgl");
 
 pub fn main() !void {
     try glfw.init(.{});
@@ -12,9 +12,9 @@ pub fn main() !void {
         .opengl_profile = .opengl_core_profile,
     });
     defer window.destroy();
-
     try glfw.makeContextCurrent(window);
-    try gl.init();
+
+    try gl.init(glfw.getProcAddress);
 
     window.setFramebufferSizeCallback(framebufferSizeCallback);
     while (!window.shouldClose()) {

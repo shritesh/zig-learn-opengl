@@ -1,5 +1,4 @@
 const std = @import("std");
-const glfw = @import("glfw");
 
 const c = @cImport({
     @cInclude("glad/gl.h");
@@ -12,8 +11,8 @@ comptime {
 const types = @import("types.zig");
 pub usingnamespace types;
 
-pub fn init() !void {
-    if (c.gladLoadGL(@ptrCast(fn ([*c]const u8) callconv(.C) ?fn () callconv(.C) void, glfw.getProcAddress)) == 0)
+pub fn init(getProcAddress: anytype) !void {
+    if (c.gladLoadGL(@ptrCast(fn ([*c]const u8) callconv(.C) ?fn () callconv(.C) void, getProcAddress)) == 0)
         return error.GladLoadError;
 }
 

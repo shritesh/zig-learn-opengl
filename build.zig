@@ -1,5 +1,5 @@
 const std = @import("std");
-const glfw = @import("lib/mach-glfw/build.zig");
+const glfw = @import("lib/glfw/build.zig");
 
 pub fn build(b: *std.build.Builder) void {
     // Standard target options allows the person running `zig build` to choose
@@ -37,6 +37,8 @@ pub fn build(b: *std.build.Builder) void {
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&exe_tests.step);
 
-    exe.addPackagePath("glfw", "lib/mach-glfw/src/main.zig");
+    exe.addPackagePath("glfw", "lib/glfw/src/main.zig");
     glfw.link(b, exe, .{});
+
+    exe.addPackagePath("zgl", "lib/zgl/zgl.zig");
 }
