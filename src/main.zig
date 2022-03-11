@@ -1,8 +1,9 @@
+const builtin = @import("builtin");
 const std = @import("std");
 const glfw = @import("glfw");
 const gl = @import("zgl");
 
-const wireframe_mode = true;
+const wireframe_mode = false;
 
 pub fn main() !void {
     try glfw.init(.{});
@@ -12,6 +13,7 @@ pub fn main() !void {
         .context_version_major = 3,
         .context_version_minor = 3,
         .opengl_profile = .opengl_core_profile,
+        .opengl_forward_compat = builtin.os.tag == .macos,
     });
     defer window.destroy();
 
@@ -34,7 +36,7 @@ pub fn main() !void {
         if (fragment_shader.get(.compile_status) == 0) return error.ShaderCompilationError;
 
         const program = gl.createProgram();
-        errdefer shader_program.delete();
+        errdefer program.delete();
         program.attach(vertex_shader);
         program.attach(fragment_shader);
         program.link();

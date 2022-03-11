@@ -47,8 +47,8 @@ fn checkError() void {
             c.GL_INVALID_ENUM => "invalid enum",
             c.GL_INVALID_VALUE => "invalid value",
             c.GL_INVALID_OPERATION => "invalid operation",
-            c.GL_STACK_OVERFLOW => "stack overflow",
-            c.GL_STACK_UNDERFLOW => "stack underflow",
+            // c.GL_STACK_OVERFLOW => "stack overflow",
+            // c.GL_STACK_UNDERFLOW => "stack underflow",
             c.GL_OUT_OF_MEMORY => "out of memory",
             c.GL_INVALID_FRAMEBUFFER_OPERATION => "invalid framebuffer operation",
             // c.GL_INVALID_FRAMEBUFFER_OPERATION_EXT => Error.InvalidFramebufferOperation,
@@ -457,13 +457,13 @@ pub const BufferTarget = enum(types.Enum) {
     /// Vertex attributes
     array_buffer = c.GL_ARRAY_BUFFER,
     /// Atomic counter storage
-    atomic_counter_buffer = c.GL_ATOMIC_COUNTER_BUFFER,
+    // atomic_counter_buffer = c.GL_ATOMIC_COUNTER_BUFFER,
     /// Buffer copy source
     copy_read_buffer = c.GL_COPY_READ_BUFFER,
     /// Buffer copy destination
     copy_write_buffer = c.GL_COPY_WRITE_BUFFER,
     /// Indirect compute dispatch commands
-    dispatch_indirect_buffer = c.GL_DISPATCH_INDIRECT_BUFFER,
+    // dispatch_indirect_buffer = c.GL_DISPATCH_INDIRECT_BUFFER,
     /// Indirect command arguments
     draw_indirect_buffer = c.GL_DRAW_INDIRECT_BUFFER,
     /// Vertex array indices
@@ -473,9 +473,9 @@ pub const BufferTarget = enum(types.Enum) {
     /// Texture data source
     pixel_unpack_buffer = c.GL_PIXEL_UNPACK_BUFFER,
     /// Query result buffer
-    query_buffer = c.GL_QUERY_BUFFER,
+    // query_buffer = c.GL_QUERY_BUFFER,
     /// Read-write storage for shaders
-    shader_storage_buffer = c.GL_SHADER_STORAGE_BUFFER,
+    // shader_storage_buffer = c.GL_SHADER_STORAGE_BUFFER,
     /// Texture data buffer
     texture_buffer = c.GL_TEXTURE_BUFFER,
     /// Transform feedback buffer
@@ -689,7 +689,7 @@ pub fn unmapNamedBuffer(buf: types.Buffer) bool {
 // Shaders
 
 pub const ShaderType = enum(types.Enum) {
-    compute = c.GL_COMPUTE_SHADER,
+    // compute = c.GL_COMPUTE_SHADER,
     vertex = c.GL_VERTEX_SHADER,
     tess_control = c.GL_TESS_CONTROL_SHADER,
     tess_evaluation = c.GL_TESS_EVALUATION_SHADER,
@@ -801,14 +801,14 @@ pub const ProgramParameter = enum(types.Enum) {
     validate_status = c.GL_VALIDATE_STATUS,
     info_log_length = c.GL_INFO_LOG_LENGTH,
     attached_shaders = c.GL_ATTACHED_SHADERS,
-    active_atomic_counter_buffers = c.GL_ACTIVE_ATOMIC_COUNTER_BUFFERS,
+    // active_atomic_counter_buffers = c.GL_ACTIVE_ATOMIC_COUNTER_BUFFERS,
     active_attributes = c.GL_ACTIVE_ATTRIBUTES,
     active_attribute_max_length = c.GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,
     active_uniforms = c.GL_ACTIVE_UNIFORMS,
     active_uniform_blocks = c.GL_ACTIVE_UNIFORM_BLOCKS,
     active_uniform_block_max_name_length = c.GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH,
     active_uniform_max_length = c.GL_ACTIVE_UNIFORM_MAX_LENGTH,
-    compute_work_group_size = c.GL_COMPUTE_WORK_GROUP_SIZE,
+    // compute_work_group_size = c.GL_COMPUTE_WORK_GROUP_SIZE,
     program_binary_length = c.GL_PROGRAM_BINARY_LENGTH,
     transform_feedback_buffer_mode = c.GL_TRANSFORM_FEEDBACK_BUFFER_MODE,
     transform_feedback_varyings = c.GL_TRANSFORM_FEEDBACK_VARYINGS,
