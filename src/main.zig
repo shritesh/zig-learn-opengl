@@ -2,6 +2,8 @@ const std = @import("std");
 const glfw = @import("glfw");
 const gl = @import("zgl");
 
+const wireframe_mode = true;
+
 pub fn main() !void {
     try glfw.init(.{});
     defer glfw.terminate();
@@ -42,9 +44,14 @@ pub fn main() !void {
     defer shader_program.delete();
 
     const vertices = [_]f32{
-        -0.5, -0.5, 0.0,
-        0.5,  -0.5, 0.0,
-        0.0,  0.5,  0.0,
+        0.5, 0.5, 0.0, // top right
+        0.5, -0.5, 0.0, // bottom right
+        -0.5, -0.5, 0.0, // bottom left
+        -0.5, 0.5, 0.0, // top left
+    };
+    const indices = [_]u32{
+        0, 1, 3, // first
+        1, 2, 3, // second
     };
 
     const vao = gl.genVertexArray();
@@ -53,14 +60,21 @@ pub fn main() !void {
     const vbo = gl.genBuffer();
     defer vbo.delete();
 
+    const ebo = gl.genBuffer();
+    defer ebo.delete();
+
     vao.bind();
+
     vbo.bind(.array_buffer);
     gl.bufferData(.array_buffer, f32, &vertices, .static_draw);
+
+    ebo.bind(.element_array_buffer);
+    gl.bufferData(.element_array_buffer, u32, &indices, .static_draw);
+
     gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
     gl.enableVertexAttribArray(0);
 
-    // gl.bindBuffer(.invalid, .array_buffer);
-    // gl.bindVertexArray(.invalid);
+    if (wireframe_mode) gl.polygonMode(.front_and_back, .line);
 
     while (!window.shouldClose()) {
         processInput(window);
@@ -69,8 +83,7 @@ pub fn main() !void {
         gl.clear(.{ .color = true });
 
         shader_program.use();
-        vao.bind();
-        gl.drawArrays(.triangles, 0, 3);
+        gl.drawElements(.triangles, 6, .u32, 0);
 
         try window.swapBuffers();
         try glfw.pollEvents();
