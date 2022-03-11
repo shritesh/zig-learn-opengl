@@ -47,43 +47,33 @@ pub fn main() !void {
     };
     defer shader_program.delete();
 
-    const vertices = [_]f32{
+    const vertices = [2][9]f32{ .{
         -0.75, -0.25, 0.0,
         -0.25, -0.25, 0.0,
         -0.5,  0.5,   0.0,
+    }, .{
+        0,    -0.25, 0.0,
+        0.5,  -0.25, 0.0,
+        0.25, 0.5,   0.0,
+    } };
 
-        0,     -0.25, 0.0,
-        0.5,   -0.25, 0.0,
-        0.25,  0.5,   0.0,
-    };
+    var vaos: [2]gl.VertexArray = undefined;
+    gl.genVertexArrays(&vaos);
+    defer gl.deleteVertexArrays(&vaos);
 
-    const vao1 = gl.genVertexArray();
-    defer vao1.delete();
+    var vbos: [2]gl.Buffer = undefined;
+    gl.genBuffers(&vbos);
+    defer gl.deleteBuffers(&vbos);
 
-    const vbo1 = gl.genBuffer();
-    defer vbo1.delete();
+    for (vaos) |_, i| {
+        vaos[i].bind();
 
-    vao1.bind();
+        vbos[i].bind(.array_buffer);
+        gl.bufferData(.array_buffer, f32, &vertices[i], .static_draw);
 
-    vbo1.bind(.array_buffer);
-    gl.bufferData(.array_buffer, f32, vertices[0..9], .static_draw);
-
-    gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
-    gl.enableVertexAttribArray(0);
-
-    const vao2 = gl.genVertexArray();
-    defer vao2.delete();
-
-    const vbo2 = gl.genBuffer();
-    defer vbo2.delete();
-
-    vao2.bind();
-
-    vbo2.bind(.array_buffer);
-    gl.bufferData(.array_buffer, f32, vertices[9..], .static_draw);
-
-    gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
-    gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
+        gl.enableVertexAttribArray(0);
+    }
 
     if (wireframe_mode) gl.polygonMode(.front_and_back, .line);
 
@@ -95,11 +85,10 @@ pub fn main() !void {
 
         shader_program.use();
 
-        vao1.bind();
-        gl.drawArrays(.triangles, 0, 3);
-
-        vao2.bind();
-        gl.drawArrays(.triangles, 0, 3);
+        for (vaos) |vao| {
+            vao.bind();
+            gl.drawArrays(.triangles, 0, 3);
+        }
 
         try window.swapBuffers();
         try glfw.pollEvents();
