@@ -14,10 +14,11 @@ pub fn main() !void {
         .opengl_profile = .opengl_core_profile,
     });
     defer window.destroy();
-    try glfw.makeContextCurrent(window);
-    window.setFramebufferSizeCallback(framebufferSizeCallback);
 
-    try gl.init(glfw.getProcAddress);
+    try glfw.makeContextCurrent(window);
+    try gl.load(glfw.getProcAddress);
+
+    window.setFramebufferSizeCallback(framebufferSizeCallback);
 
     const shader_program = blk: {
         const vertex_shader = gl.createShader(.vertex);
@@ -33,6 +34,7 @@ pub fn main() !void {
         if (fragment_shader.get(.compile_status) == 0) return error.ShaderCompilationError;
 
         const program = gl.createProgram();
+        errdefer shader_program.delete();
         program.attach(vertex_shader);
         program.attach(fragment_shader);
         program.link();

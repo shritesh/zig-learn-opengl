@@ -11,7 +11,7 @@ comptime {
 const types = @import("types.zig");
 pub usingnamespace types;
 
-pub fn init(getProcAddress: anytype) !void {
+pub fn load(getProcAddress: anytype) !void {
     if (c.gladLoadGL(@ptrCast(fn ([*c]const u8) callconv(.C) ?fn () callconv(.C) void, getProcAddress)) == 0)
         return error.GladLoadError;
 }
