@@ -57,16 +57,30 @@ pub fn main() !void {
         0.25,  0.5,   0.0,
     };
 
-    const vao = gl.genVertexArray();
-    defer vao.delete();
+    const vao1 = gl.genVertexArray();
+    defer vao1.delete();
 
-    const vbo = gl.genBuffer();
-    defer vbo.delete();
+    const vbo1 = gl.genBuffer();
+    defer vbo1.delete();
 
-    vao.bind();
+    vao1.bind();
 
-    vbo.bind(.array_buffer);
-    gl.bufferData(.array_buffer, f32, &vertices, .static_draw);
+    vbo1.bind(.array_buffer);
+    gl.bufferData(.array_buffer, f32, vertices[0..9], .static_draw);
+
+    gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
+    gl.enableVertexAttribArray(0);
+
+    const vao2 = gl.genVertexArray();
+    defer vao2.delete();
+
+    const vbo2 = gl.genBuffer();
+    defer vbo2.delete();
+
+    vao2.bind();
+
+    vbo2.bind(.array_buffer);
+    gl.bufferData(.array_buffer, f32, vertices[9..], .static_draw);
 
     gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
     gl.enableVertexAttribArray(0);
@@ -80,8 +94,12 @@ pub fn main() !void {
         gl.clear(.{ .color = true });
 
         shader_program.use();
+
+        vao1.bind();
         gl.drawArrays(.triangles, 0, 3);
-        gl.drawArrays(.triangles, 3, 3);
+
+        vao2.bind();
+        gl.drawArrays(.triangles, 0, 3);
 
         try window.swapBuffers();
         try glfw.pollEvents();
