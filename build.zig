@@ -19,6 +19,9 @@ pub fn build(b: *std.build.Builder) void {
     exe.addIncludeDir("lib/glad/include");
     exe.addCSourceFile("lib/glad/src/gl.c", &.{});
 
+    exe.addIncludeDir("lib/stb");
+    exe.addCSourceFile("lib/stb/stb_image.c", &.{});
+
     exe.install();
 
     const run_cmd = exe.run();

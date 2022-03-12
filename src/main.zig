@@ -2,6 +2,8 @@ const builtin = @import("builtin");
 const std = @import("std");
 const glfw = @import("glfw");
 const gl = @import("zgl");
+
+const Image = @import("./image.zig").Image;
 const Shader = @import("./shader.zig").Shader;
 
 const wireframe_mode = false;
@@ -26,11 +28,20 @@ pub fn main() !void {
     const shader = try Shader.init(@embedFile("triangle.vert"), @embedFile("triangle.frag"));
     defer shader.deinit();
 
+    const container_image = try Image.load(@embedFile("../assets/container.jpg"));
+    container_image.unload();
+
     const vertices = [_]f32{
-        // positions, colors
-        0.5, -0.5, 0.0, 1.0, 0.0, 0.0, // bottom right
-        -0.5, -0.5, 0.0, 0.0, 1.0, 0.0, // bottom left
-        0.0, 0.5, 0.0, 0.0, 0.0, 1.0, // top
+        // position, color, texture coords
+        0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
+        0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
+        -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom left
+        -0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
+    };
+
+    const indices = [_]u32{
+        0, 1, 3, // first triangle
+        1, 2, 3, // second triangle
     };
 
     const vao = gl.genVertexArray();
@@ -38,16 +49,37 @@ pub fn main() !void {
 
     const vbo = gl.genBuffer();
     defer vbo.delete();
+
+    const ebo = gl.genBuffer();
+    defer ebo.delete();
+
     vao.bind();
 
     vbo.bind(.array_buffer);
     gl.bufferData(.array_buffer, f32, &vertices, .static_draw);
 
-    gl.vertexAttribPointer(0, 3, .float, false, 6 * @sizeOf(f32), 0);
+    ebo.bind(.element_array_buffer);
+    gl.bufferData(.element_array_buffer, u32, &indices, .static_draw);
+
+    gl.vertexAttribPointer(0, 3, .float, false, 8 * @sizeOf(f32), 0);
     gl.enableVertexAttribArray(0);
 
-    gl.vertexAttribPointer(1, 3, .float, false, 6 * @sizeOf(f32), 3 * @sizeOf(f32));
+    gl.vertexAttribPointer(1, 3, .float, false, 8 * @sizeOf(f32), 3 * @sizeOf(f32));
     gl.enableVertexAttribArray(1);
+
+    gl.vertexAttribPointer(2, 2, .float, false, 8 * @sizeOf(f32), 6 * @sizeOf(f32));
+    gl.enableVertexAttribArray(2);
+
+    const texture = gl.genTexture();
+    defer texture.delete();
+
+    texture.bind(.@"2d");
+    gl.texParameter(.@"2d", .wrap_s, .repeat);
+    gl.texParameter(.@"2d", .wrap_t, .repeat);
+    gl.texParameter(.@"2d", .min_filter, .linear_mipmap_linear);
+    gl.texParameter(.@"2d", .mag_filter, .linear);
+    gl.textureImage2D(.@"2d", 0, .rgb, container_image.width, container_image.height, .rgb, .unsigned_byte, container_image.data);
+    gl.generateMipmap(.@"2d");
 
     if (wireframe_mode) gl.polygonMode(.front_and_back, .line);
 
@@ -58,7 +90,7 @@ pub fn main() !void {
         gl.clear(.{ .color = true });
 
         shader.use();
-        gl.drawArrays(.triangles, 0, 3);
+        gl.drawElements(.triangles, 6, .u32, 0);
 
         try window.swapBuffers();
         try glfw.pollEvents();

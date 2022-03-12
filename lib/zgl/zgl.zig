@@ -1412,7 +1412,7 @@ pub const TextureUnit = enum(types.Enum) {
 };
 
 pub const TextureParameter = enum(types.Enum) {
-    depth_stencil_texture_mode = c.GL_DEPTH_STENCIL_TEXTURE_MODE,
+    // depth_stencil_texture_mode = c.GL_DEPTH_STENCIL_TEXTURE_MODE,
     base_level = c.GL_TEXTURE_BASE_LEVEL,
     compare_func = c.GL_TEXTURE_COMPARE_FUNC,
     compare_mode = c.GL_TEXTURE_COMPARE_MODE,
@@ -1439,7 +1439,7 @@ pub fn TextureParameterType(comptime param: TextureParameter) type {
             clamp_to_border = c.GL_CLAMP_TO_BORDER,
             mirrored_repeat = c.GL_MIRRORED_REPEAT,
             repeat = c.GL_REPEAT,
-            mirror_clamp_to_edge = c.GL_MIRROR_CLAMP_TO_EDGE,
+            // mirror_clamp_to_edge = c.GL_MIRROR_CLAMP_TO_EDGE,
         },
         .mag_filter => enum(types.Int) {
             nearest = c.GL_NEAREST,
@@ -1593,7 +1593,7 @@ pub const PixelFormat = enum(types.Enum) {
     bgra = c.GL_BGRA,
     depth_component = c.GL_DEPTH_COMPONENT,
     stencil_index = c.GL_STENCIL_INDEX,
-    luminance = c.GL_LUMINANCE,
+    // luminance = c.GL_LUMINANCE,
 
     red_integer = c.GL_RED_INTEGER,
     rg_integer = c.GL_RG_INTEGER,
