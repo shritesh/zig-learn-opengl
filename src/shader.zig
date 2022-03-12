@@ -35,7 +35,7 @@ pub const Shader = struct {
         self.program.use();
     }
 
-    pub fn set(self: Shader, name: []const u8, T: type, value: T) void {
+    pub fn set(self: Shader, name: [:0]const u8, comptime T: type, value: T) void {
         const location = self.program.uniformLocation(name);
 
         switch (T) {
