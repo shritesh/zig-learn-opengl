@@ -26,10 +26,10 @@ pub fn main() !void {
     window.setFramebufferSizeCallback(framebufferSizeCallback);
     if (wireframe_mode) gl.polygonMode(.front_and_back, .line);
 
-    const container_image = try Image.load(@embedFile("../assets/container.jpg"));
+    const container_image = try Image.load(@embedFile("../assets/container.jpg"), .{});
     defer container_image.unload();
 
-    const face_image = try Image.load(@embedFile("../assets/awesomeface.png"));
+    const face_image = try Image.load(@embedFile("../assets/awesomeface.png"), .{ .flip = true });
     defer face_image.unload();
 
     const shader = try Shader.init(@embedFile("triangle.vert"), @embedFile("triangle.frag"));

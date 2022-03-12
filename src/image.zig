@@ -7,10 +7,12 @@ pub const Image = struct {
     height: usize,
     data: [*]u8 = undefined,
 
-    pub fn load(contents: []const u8) !Image {
+    pub fn load(contents: []const u8, flags: struct { flip: bool = false }) !Image {
         var width: c_int = undefined;
         var height: c_int = undefined;
         var n_channels: c_int = undefined;
+
+        c.stbi_set_flip_vertically_on_load(@boolToInt(flags.flip));
 
         const data = c.stbi_load_from_memory(contents.ptr, @intCast(c_int, contents.len), &width, &height, &n_channels, 0) orelse return error.ImageLoadError;
 
