@@ -37,10 +37,10 @@ pub fn main() !void {
 
     const vertices = [_]f32{
         // position, color, texture coords
-        0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
-        0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
-        -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom left
-        -0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
+        0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.55, 0.55, // top right
+        0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 0.55, 0.45, // bottom right
+        -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.45, 0.45, // bottom left
+        -0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 0.45, 0.55, // top left
     };
 
     const indices = [_]u32{
@@ -79,10 +79,10 @@ pub fn main() !void {
 
     gl.activeTexture(.texture_0);
     texture0.bind(.@"2d");
-    gl.texParameter(.@"2d", .wrap_s, .repeat);
-    gl.texParameter(.@"2d", .wrap_t, .repeat);
-    gl.texParameter(.@"2d", .min_filter, .linear_mipmap_linear);
-    gl.texParameter(.@"2d", .mag_filter, .linear);
+    gl.texParameter(.@"2d", .wrap_s, .clamp_to_edge);
+    gl.texParameter(.@"2d", .wrap_t, .clamp_to_edge);
+    gl.texParameter(.@"2d", .min_filter, .nearest);
+    gl.texParameter(.@"2d", .mag_filter, .nearest);
     gl.textureImage2D(.@"2d", 0, .rgb, container_image.width, container_image.height, .rgb, .unsigned_byte, container_image.data);
     gl.generateMipmap(.@"2d");
 
