@@ -1,4 +1,5 @@
 const gl = @import("zgl");
+const math = @import("zmath");
 
 pub const Shader = struct {
     program: gl.Program,
@@ -41,6 +42,7 @@ pub const Shader = struct {
         switch (T) {
             f32 => self.program.uniform1f(location, value),
             i32 => self.program.uniform1i(location, value),
+            math.Mat => gl.uniformMatrix4fv(location, false, &.{math.matToArray(value)}),
             else => @compileError("Invalid type"),
         }
     }

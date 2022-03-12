@@ -2,13 +2,14 @@ const builtin = @import("builtin");
 const std = @import("std");
 const glfw = @import("glfw");
 const gl = @import("zgl");
+const math = @import("zmath");
+
+const tau = std.math.tau;
 
 const Image = @import("./image.zig").Image;
 const Shader = @import("./shader.zig").Shader;
 
 const wireframe_mode = false;
-
-var blend_amount: f32 = 0.5;
 
 pub fn main() !void {
     try glfw.init(.{});
@@ -38,11 +39,11 @@ pub fn main() !void {
     defer shader.deinit();
 
     const vertices = [_]f32{
-        // position, color, texture coords
-        0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
-        0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
-        -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom left
-        -0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
+        // position, texture coords
+        0.5, 0.5, 0.0, 1.0, 1.0, // top right
+        0.5, -0.5, 0.0, 1.0, 0.0, // bottom right
+        -0.5, -0.5, 0.0, 0.0, 0.0, // bottom left
+        -0.5, 0.5, 0.0, 0.0, 1.0, // top left
     };
 
     const indices = [_]u32{
@@ -67,14 +68,11 @@ pub fn main() !void {
     ebo.bind(.element_array_buffer);
     gl.bufferData(.element_array_buffer, u32, &indices, .static_draw);
 
-    gl.vertexAttribPointer(0, 3, .float, false, 8 * @sizeOf(f32), 0);
+    gl.vertexAttribPointer(0, 3, .float, false, 5 * @sizeOf(f32), 0);
     gl.enableVertexAttribArray(0);
 
-    gl.vertexAttribPointer(1, 3, .float, false, 8 * @sizeOf(f32), 3 * @sizeOf(f32));
+    gl.vertexAttribPointer(1, 2, .float, false, 5 * @sizeOf(f32), 3 * @sizeOf(f32));
     gl.enableVertexAttribArray(1);
-
-    gl.vertexAttribPointer(2, 2, .float, false, 8 * @sizeOf(f32), 6 * @sizeOf(f32));
-    gl.enableVertexAttribArray(2);
 
     const texture0 = gl.genTexture();
     defer texture0.delete();
@@ -104,13 +102,16 @@ pub fn main() !void {
     shader.set("texture0", i32, 0);
     shader.set("texture1", i32, 1);
 
+    var trans = math.rotationZ(tau / 4.0);
+    trans = math.mul(trans, math.scaling(0.5, 0.5, 0.5));
+    shader.set("transform", math.Mat, trans);
+
     while (!window.shouldClose()) {
         processInput(window);
 
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true });
 
-        shader.set("blendAmount", f32, blend_amount);
         gl.drawElements(.triangles, 6, .u32, 0);
 
         try window.swapBuffers();
@@ -121,14 +122,6 @@ pub fn main() !void {
 fn processInput(window: glfw.Window) void {
     if (window.getKey(.q) == .press) {
         window.setShouldClose(true);
-    }
-
-    if (window.getKey(.up) == .press) {
-        blend_amount = @minimum(1.0, blend_amount + 0.01);
-    }
-
-    if (window.getKey(.down) == .press) {
-        blend_amount = @maximum(0.0, blend_amount - 0.01);
     }
 }
 
