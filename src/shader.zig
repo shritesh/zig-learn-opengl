@@ -40,6 +40,7 @@ pub const Shader = struct {
 
         switch (T) {
             f32 => self.program.uniform1f(location, value),
+            i32 => self.program.uniform1i(location, value),
             else => @compileError("Invalid type"),
         }
     }

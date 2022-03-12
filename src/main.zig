@@ -24,12 +24,16 @@ pub fn main() !void {
     try gl.load(glfw.getProcAddress);
 
     window.setFramebufferSizeCallback(framebufferSizeCallback);
+    if (wireframe_mode) gl.polygonMode(.front_and_back, .line);
+
+    const container_image = try Image.load(@embedFile("../assets/container.jpg"));
+    defer container_image.unload();
+
+    const face_image = try Image.load(@embedFile("../assets/awesomeface.png"));
+    defer face_image.unload();
 
     const shader = try Shader.init(@embedFile("triangle.vert"), @embedFile("triangle.frag"));
     defer shader.deinit();
-
-    const container_image = try Image.load(@embedFile("../assets/container.jpg"));
-    container_image.unload();
 
     const vertices = [_]f32{
         // position, color, texture coords
@@ -70,10 +74,11 @@ pub fn main() !void {
     gl.vertexAttribPointer(2, 2, .float, false, 8 * @sizeOf(f32), 6 * @sizeOf(f32));
     gl.enableVertexAttribArray(2);
 
-    const texture = gl.genTexture();
-    defer texture.delete();
+    const texture0 = gl.genTexture();
+    defer texture0.delete();
 
-    texture.bind(.@"2d");
+    gl.activeTexture(.texture_0);
+    texture0.bind(.@"2d");
     gl.texParameter(.@"2d", .wrap_s, .repeat);
     gl.texParameter(.@"2d", .wrap_t, .repeat);
     gl.texParameter(.@"2d", .min_filter, .linear_mipmap_linear);
@@ -81,7 +86,21 @@ pub fn main() !void {
     gl.textureImage2D(.@"2d", 0, .rgb, container_image.width, container_image.height, .rgb, .unsigned_byte, container_image.data);
     gl.generateMipmap(.@"2d");
 
-    if (wireframe_mode) gl.polygonMode(.front_and_back, .line);
+    const texture1 = gl.genTexture();
+    defer texture1.delete();
+
+    gl.activeTexture(.texture_1);
+    texture1.bind(.@"2d");
+    gl.texParameter(.@"2d", .wrap_s, .repeat);
+    gl.texParameter(.@"2d", .wrap_t, .repeat);
+    gl.texParameter(.@"2d", .min_filter, .linear);
+    gl.texParameter(.@"2d", .mag_filter, .linear);
+    gl.textureImage2D(.@"2d", 0, .rgb, face_image.width, face_image.height, .rgba, .unsigned_byte, face_image.data);
+    gl.generateMipmap(.@"2d");
+
+    shader.use();
+    shader.set("texture0", i32, 0);
+    shader.set("texture1", i32, 1);
 
     while (!window.shouldClose()) {
         processInput(window);
@@ -89,7 +108,6 @@ pub fn main() !void {
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true });
 
-        shader.use();
         gl.drawElements(.triangles, 6, .u32, 0);
 
         try window.swapBuffers();
