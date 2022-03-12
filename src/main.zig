@@ -2,6 +2,7 @@ const builtin = @import("builtin");
 const std = @import("std");
 const glfw = @import("glfw");
 const gl = @import("zgl");
+const Shader = @import("./shader.zig").Shader;
 
 const wireframe_mode = false;
 
@@ -22,30 +23,8 @@ pub fn main() !void {
 
     window.setFramebufferSizeCallback(framebufferSizeCallback);
 
-    const shader_program = blk: {
-        const vertex_shader = gl.createShader(.vertex);
-        defer vertex_shader.delete();
-        vertex_shader.source(1, &.{@embedFile("triangle.vert")});
-        vertex_shader.compile();
-        if (vertex_shader.get(.compile_status) == 0) return error.ShaderCompilationError;
-
-        const fragment_shader = gl.createShader(.fragment);
-        defer fragment_shader.delete();
-        fragment_shader.source(1, &.{@embedFile("triangle.frag")});
-        fragment_shader.compile();
-        if (fragment_shader.get(.compile_status) == 0) return error.ShaderCompilationError;
-
-        const program = gl.createProgram();
-        errdefer program.delete();
-        program.attach(vertex_shader);
-        program.attach(fragment_shader);
-        program.link();
-
-        if (program.get(.link_status) == 0) return error.ProgramLinkError;
-
-        break :blk program;
-    };
-    defer shader_program.delete();
+    const shader = try Shader.init(@embedFile("triangle.vert"), @embedFile("triangle.frag"));
+    defer shader.deinit();
 
     const vertices = [_]f32{
         // positions, colors
@@ -78,7 +57,7 @@ pub fn main() !void {
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true });
 
-        shader_program.use();
+        shader.use();
         gl.drawArrays(.triangles, 0, 3);
 
         try window.swapBuffers();
