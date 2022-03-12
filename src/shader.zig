@@ -40,8 +40,8 @@ pub const Shader = struct {
         const location = self.program.uniformLocation(name);
 
         switch (T) {
-            f32 => self.program.uniform1f(location, value),
-            i32 => self.program.uniform1i(location, value),
+            f32 => gl.uniform1f(location, value),
+            i32 => gl.uniform1i(location, value),
             math.Mat => gl.uniformMatrix4fv(location, false, &.{math.matToArray(value)}),
             else => @compileError("Invalid type"),
         }
