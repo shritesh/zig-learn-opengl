@@ -8,6 +8,8 @@ const Shader = @import("./shader.zig").Shader;
 
 const wireframe_mode = false;
 
+var blend_amount: f32 = 0.5;
+
 pub fn main() !void {
     try glfw.init(.{});
     defer glfw.terminate();
@@ -108,6 +110,7 @@ pub fn main() !void {
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true });
 
+        shader.set("blendAmount", f32, blend_amount);
         gl.drawElements(.triangles, 6, .u32, 0);
 
         try window.swapBuffers();
@@ -116,8 +119,16 @@ pub fn main() !void {
 }
 
 fn processInput(window: glfw.Window) void {
-    if (window.getKey(.escape) == .press) {
+    if (window.getKey(.q) == .press) {
         window.setShouldClose(true);
+    }
+
+    if (window.getKey(.up) == .press) {
+        blend_amount = @minimum(1.0, blend_amount + 0.01);
+    }
+
+    if (window.getKey(.down) == .press) {
+        blend_amount = @maximum(0.0, blend_amount - 0.01);
     }
 }
 
