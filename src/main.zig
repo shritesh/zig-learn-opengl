@@ -108,10 +108,17 @@ pub fn main() !void {
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true });
 
-        var trans = math.translation(0.5, -0.5, 0.0);
-        trans = math.mul(math.rotationZ(@floatCast(f32, glfw.getTime())), trans);
-        shader.set("transform", math.Mat, trans);
+        const t = @floatCast(f32, glfw.getTime());
 
+        var trans = math.rotationZ(t);
+        trans = math.mul(trans, math.translation(0.5, -0.5, 0.0));
+        shader.set("transform", math.Mat, trans);
+        gl.drawElements(.triangles, 6, .u32, 0);
+
+        const scale = @sin(t);
+        trans = math.scaling(scale, scale, scale);
+        trans = math.mul(trans, math.translation(-0.5, 0.5, 0.0));
+        shader.set("transform", math.Mat, trans);
         gl.drawElements(.triangles, 6, .u32, 0);
 
         try window.swapBuffers();
