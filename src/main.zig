@@ -27,10 +27,9 @@ pub fn main() !void {
     defer shader.deinit();
 
     const vertices = [_]f32{
-        // positions, colors
-        0.5, -0.5, 0.0, 1.0, 0.0, 0.0, // bottom right
-        -0.5, -0.5, 0.0, 0.0, 1.0, 0.0, // bottom left
-        0.0, 0.5, 0.0, 0.0, 0.0, 1.0, // top
+        0.5, -0.5, 0.0, // bottom right
+        -0.5, -0.5, 0.0, // bottom left
+        0.0, 0.5, 0.0, // top
     };
 
     const vao = gl.genVertexArray();
@@ -43,11 +42,8 @@ pub fn main() !void {
     vbo.bind(.array_buffer);
     gl.bufferData(.array_buffer, f32, &vertices, .static_draw);
 
-    gl.vertexAttribPointer(0, 3, .float, false, 6 * @sizeOf(f32), 0);
+    gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
     gl.enableVertexAttribArray(0);
-
-    gl.vertexAttribPointer(1, 3, .float, false, 6 * @sizeOf(f32), 3 * @sizeOf(f32));
-    gl.enableVertexAttribArray(1);
 
     if (wireframe_mode) gl.polygonMode(.front_and_back, .line);
 
