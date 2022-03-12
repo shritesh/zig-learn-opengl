@@ -108,8 +108,8 @@ pub fn main() !void {
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true });
 
-        var trans = math.translation(0.5, -0.5, 0.0);
-        trans = math.mul(math.rotationZ(@floatCast(f32, glfw.getTime())), trans);
+        var trans = math.rotationZ(@floatCast(f32, glfw.getTime()));
+        trans = math.mul(math.translation(0.5, -0.5, 0.0), trans);
         shader.set("transform", math.Mat, trans);
 
         gl.drawElements(.triangles, 6, .u32, 0);
