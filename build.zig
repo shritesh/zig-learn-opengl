@@ -44,4 +44,5 @@ pub fn build(b: *std.build.Builder) void {
     glfw.link(b, exe, .{});
 
     exe.addPackagePath("zgl", "lib/zgl/zgl.zig");
+    exe.addPackagePath("zmath", "lib/zmath/zmath.zig");
 }
