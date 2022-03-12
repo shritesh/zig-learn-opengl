@@ -102,15 +102,15 @@ pub fn main() !void {
     shader.set("texture0", i32, 0);
     shader.set("texture1", i32, 1);
 
-    var trans = math.rotationZ(tau / 4.0);
-    trans = math.mul(trans, math.scaling(0.5, 0.5, 0.5));
-    shader.set("transform", math.Mat, trans);
-
     while (!window.shouldClose()) {
         processInput(window);
 
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true });
+
+        var trans = math.translation(0.5, -0.5, 0.0);
+        trans = math.mul(math.rotationZ(@floatCast(f32, glfw.getTime())), trans);
+        shader.set("transform", math.Mat, trans);
 
         gl.drawElements(.triangles, 6, .u32, 0);
 
