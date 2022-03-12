@@ -58,6 +58,7 @@ pub fn main() !void {
         gl.clear(.{ .color = true });
 
         shader.use();
+        shader.set("xOffset", f32, 0.5);
         gl.drawArrays(.triangles, 0, 3);
 
         try window.swapBuffers();
