@@ -11,6 +11,8 @@ const Shader = @import("./shader.zig").Shader;
 
 const wireframe_mode = false;
 
+var fov: f32 = 40.0;
+
 pub fn main() !void {
     try glfw.init(.{});
     defer glfw.terminate();
@@ -142,9 +144,7 @@ pub fn main() !void {
     shader.set("texture1", i32, 1);
 
     const view = math.translation(0.0, 0.0, -3.0);
-    const projection = math.perspectiveFovRh(tau / 8.0, 800.0 / 600.0, 0.1, 100.0);
     shader.set("view", math.Mat, view);
-    shader.set("projection", math.Mat, projection);
 
     while (!window.shouldClose()) {
         processInput(window);
@@ -153,6 +153,9 @@ pub fn main() !void {
         gl.clear(.{ .color = true, .depth = true });
 
         for (cube_positions) |position, i| {
+            const projection = math.perspectiveFovRh(tau * fov / 360.0, 800.0 / 600.0, 0.1, 100.0);
+            shader.set("projection", math.Mat, projection);
+
             const angle = 20.0 * @intToFloat(f32, i);
 
             var model = math.translationV(position);
@@ -169,6 +172,15 @@ pub fn main() !void {
 fn processInput(window: glfw.Window) void {
     if (window.getKey(.q) == .press) {
         window.setShouldClose(true);
+    }
+    if (window.getKey(.up) == .press) {
+        fov += 1.0;
+        std.debug.print("FOV: {d:2}\n", .{fov});
+    }
+    if (window.getKey(.down) == .press) {
+        fov -= 1.0;
+        fov = @maximum(1.0, fov); // crashes at 0
+        std.debug.print("FOV: {d:2}\n", .{fov});
     }
 }
 
