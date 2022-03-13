@@ -141,16 +141,27 @@ pub fn main() !void {
     shader.set("texture0", i32, 0);
     shader.set("texture1", i32, 1);
 
-    const view = math.translation(0.0, 0.0, -3.0);
     const projection = math.perspectiveFovRh(tau / 8.0, 800.0 / 600.0, 0.1, 100.0);
-    shader.set("view", math.Mat, view);
     shader.set("projection", math.Mat, projection);
 
     while (!window.shouldClose()) {
         processInput(window);
 
+        const t = @floatCast(f32, glfw.getTime());
+
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true, .depth = true });
+
+        const radius = 10.0;
+        const cam_x = @sin(t) * radius;
+        const cam_z = @cos(t) * radius;
+
+        const view = math.lookAtRh(
+            .{ cam_x, 0.0, cam_z, 1.0 },
+            .{ 0.0, 0.0, 0.0, 1.0 },
+            .{ 0.0, 1.0, 0.0, 1.0 },
+        );
+        shader.set("view", math.Mat, view);
 
         for (cube_positions) |position, i| {
             const angle = 20.0 * @intToFloat(f32, i);
