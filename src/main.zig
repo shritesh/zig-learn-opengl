@@ -11,10 +11,12 @@ const Shader = @import("./shader.zig").Shader;
 
 const wireframe_mode = false;
 
-const camera_speed = math.f32x4s(0.05);
+var delta_time: f32 = 0;
+var last_frame: f32 = 0;
+
 var camera_pos = math.f32x4(0.0, 0.0, 3.0, 1.0);
-var camera_front = math.f32x4(0.0, 0.0, -1.0, 1.0);
-var camera_up = math.f32x4(0.0, 1.0, 3.0, 1.0);
+const camera_front = math.f32x4(0.0, 0.0, -1.0, 1.0);
+const camera_up = math.f32x4(0.0, 1.0, 3.0, 1.0);
 
 pub fn main() !void {
     try glfw.init(.{});
@@ -88,7 +90,7 @@ pub fn main() !void {
         -0.5, 0.5,  -0.5, 0.0, 1.0,
     };
 
-    const cube_positions = [_]math.Vec{
+    const cube_positions = [_]math.F32x4{
         .{ 0.0, 0.0, 0.0 },
         .{ 2.0, 5.0, -15.0 },
         .{ -1.5, -2.2, -2.5 },
@@ -152,7 +154,9 @@ pub fn main() !void {
     while (!window.shouldClose()) {
         processInput(window);
 
-        // const t = @floatCast(f32, glfw.getTime());
+        const current_frame = @floatCast(f32, glfw.getTime());
+        delta_time = current_frame - last_frame;
+        last_frame = current_frame;
 
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true, .depth = true });
@@ -183,6 +187,7 @@ fn processInput(window: glfw.Window) void {
         window.setShouldClose(true);
     }
 
+    const camera_speed = math.f32x4s(2.5 * delta_time);
     if (window.getKey(.w) == .press) {
         camera_pos += camera_speed * camera_front;
     }
