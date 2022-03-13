@@ -83,6 +83,19 @@ pub fn main() !void {
         -0.5, 0.5,  -0.5, 0.0, 1.0,
     };
 
+    const cube_positions = [_]math.Vec{
+        .{ 0.0, 0.0, 0.0 },
+        .{ 2.0, 5.0, -15.0 },
+        .{ -1.5, -2.2, -2.5 },
+        .{ -3.8, -2.0, -12.3 },
+        .{ 2.4, -0.4, -3.5 },
+        .{ -1.7, 3.0, -7.5 },
+        .{ 1.3, -2.0, -2.5 },
+        .{ 1.5, 2.0, -2.5 },
+        .{ 1.5, 0.2, -1.5 },
+        .{ -1.3, 1.0, -1.5 },
+    };
+
     const vao = gl.genVertexArray();
     defer vao.delete();
 
@@ -107,7 +120,7 @@ pub fn main() !void {
     texture0.bind(.@"2d");
     gl.texParameter(.@"2d", .wrap_s, .repeat);
     gl.texParameter(.@"2d", .wrap_t, .repeat);
-    gl.texParameter(.@"2d", .min_filter, .linear_mipmap_linear);
+    gl.texParameter(.@"2d", .min_filter, .linear);
     gl.texParameter(.@"2d", .mag_filter, .linear);
     gl.textureImage2D(.@"2d", 0, .rgb, container_image.width, container_image.height, .rgb, .unsigned_byte, container_image.data);
     gl.generateMipmap(.@"2d");
@@ -136,15 +149,17 @@ pub fn main() !void {
     while (!window.shouldClose()) {
         processInput(window);
 
-        const t = @floatCast(f32, glfw.getTime());
-
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true, .depth = true });
 
-        var model = math.rotationY(t * 0.5);
-        model = math.mul(model, math.rotationX(t));
-        shader.set("model", math.Mat, model);
-        gl.drawArrays(.triangles, 0, 36);
+        for (cube_positions) |position, i| {
+            const angle = 20.0 * @intToFloat(f32, i);
+
+            var model = math.translationV(position);
+            model = math.mul(math.matFromAxisAngle(.{ 1.0, 0.3, 0.5 }, angle), model);
+            shader.set("model", math.Mat, model);
+            gl.drawArrays(.triangles, 0, 36);
+        }
 
         try window.swapBuffers();
         try glfw.pollEvents();
