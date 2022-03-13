@@ -11,6 +11,8 @@ const Shader = @import("./shader.zig").Shader;
 
 const wireframe_mode = false;
 
+var camera = math.f32x4(0.0, 0.0, -3.0, 1.0);
+
 pub fn main() !void {
     try glfw.init(.{});
     defer glfw.terminate();
@@ -27,6 +29,7 @@ pub fn main() !void {
     try gl.load(glfw.getProcAddress);
 
     window.setFramebufferSizeCallback(framebufferSizeCallback);
+    window.setScrollCallback(scrollCallback);
     if (wireframe_mode) gl.polygonMode(.front_and_back, .line);
     gl.enable(.depth_test);
 
@@ -141,9 +144,7 @@ pub fn main() !void {
     shader.set("texture0", i32, 0);
     shader.set("texture1", i32, 1);
 
-    const view = math.translation(0.0, 0.0, -3.0);
     const projection = math.perspectiveFovRh(tau / 8.0, 800.0 / 600.0, 0.1, 100.0);
-    shader.set("view", math.Mat, view);
     shader.set("projection", math.Mat, projection);
 
     while (!window.shouldClose()) {
@@ -153,6 +154,9 @@ pub fn main() !void {
         gl.clear(.{ .color = true, .depth = true });
 
         for (cube_positions) |position, i| {
+            const view = math.translationV(camera);
+            shader.set("view", math.Mat, view);
+
             const angle = 20.0 * @intToFloat(f32, i);
 
             var model = math.translationV(position);
@@ -170,6 +174,23 @@ fn processInput(window: glfw.Window) void {
     if (window.getKey(.q) == .press) {
         window.setShouldClose(true);
     }
+    if (window.getKey(.up) == .press) {
+        camera[1] -= 0.1;
+    }
+    if (window.getKey(.down) == .press) {
+        camera[1] += 0.1;
+    }
+
+    if (window.getKey(.left) == .press) {
+        camera[0] += 0.1;
+    }
+    if (window.getKey(.right) == .press) {
+        camera[0] -= 0.1;
+    }
+}
+
+fn scrollCallback(_: glfw.Window, xoffset: f64, _: f64) void {
+    camera[2] += @floatCast(f32, xoffset);
 }
 
 fn framebufferSizeCallback(_: glfw.Window, width: u32, height: u32) void {
