@@ -11,12 +11,19 @@ const Shader = @import("./shader.zig").Shader;
 
 const wireframe_mode = false;
 
+var camera_pos = math.f32x4(0.0, 0.0, 3.0, 1.0);
+var camera_front = math.f32x4(0.0, 0.0, -1.0, 1.0);
+const camera_up = math.f32x4(0.0, 1.0, 0.0, 1.0);
+
 var delta_time: f32 = 0;
 var last_frame: f32 = 0;
+var first_mouse = true;
+var last_x: f32 = 400.0;
+var last_y: f32 = 300.0;
 
-var camera_pos = math.f32x4(0.0, 0.0, 3.0, 1.0);
-const camera_front = math.f32x4(0.0, 0.0, -1.0, 1.0);
-const camera_up = math.f32x4(0.0, 1.0, 3.0, 1.0);
+var yaw: f32 = -90.0;
+var pitch: f32 = 0.0;
+var fov: f32 = 45.0;
 
 pub fn main() !void {
     try glfw.init(.{});
@@ -35,6 +42,11 @@ pub fn main() !void {
 
     window.setFramebufferSizeCallback(framebufferSizeCallback);
     if (wireframe_mode) gl.polygonMode(.front_and_back, .line);
+
+    try window.setInputModeCursor(.disabled);
+    window.setCursorPosCallback(cursorPosCallback);
+    window.setScrollCallback(scrollCallback);
+
     gl.enable(.depth_test);
 
     const container_image = try Image.load(@embedFile("../assets/container.jpg"), .{});
@@ -148,9 +160,6 @@ pub fn main() !void {
     shader.set("texture0", i32, 0);
     shader.set("texture1", i32, 1);
 
-    const projection = math.perspectiveFovRh(tau / 8.0, 800.0 / 600.0, 0.1, 100.0);
-    shader.set("projection", math.Mat, projection);
-
     while (!window.shouldClose()) {
         processInput(window);
 
@@ -160,6 +169,9 @@ pub fn main() !void {
 
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true, .depth = true });
+
+        const projection = math.perspectiveFovRh(fov * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
+        shader.set("projection", math.Mat, projection);
 
         const view = math.lookAtRh(
             camera_pos,
@@ -204,4 +216,45 @@ fn processInput(window: glfw.Window) void {
 
 fn framebufferSizeCallback(_: glfw.Window, width: u32, height: u32) void {
     gl.viewport(0, 0, width, height);
+}
+
+fn cursorPosCallback(_: glfw.Window, xpos: f64, ypos: f64) void {
+    const x = @floatCast(f32, xpos);
+    const y = @floatCast(f32, ypos);
+
+    if (first_mouse) {
+        last_x = x;
+        last_y = y;
+        first_mouse = false;
+    }
+
+    var x_offset = x - last_x;
+    var y_offset = last_y - y;
+
+    last_x = x;
+    last_y = y;
+
+    const sensitivity = 0.1;
+    x_offset *= sensitivity;
+    y_offset *= sensitivity;
+
+    yaw += x_offset;
+    pitch += y_offset;
+
+    if (pitch > 89.0) pitch = 89.0;
+    if (pitch < -89.0) pitch = -89.0;
+
+    const direction = math.f32x4(
+        math.cos(yaw * tau / 360.0) * math.cos(pitch * tau / 360.0),
+        math.sin(pitch * tau / 360.0),
+        math.sin(yaw * tau / 360.0) * math.cos(pitch * tau / 360.0),
+        1.0,
+    );
+    camera_front = math.normalize3(direction);
+}
+
+fn scrollCallback(_: glfw.Window, _: f64, yoffset: f64) void {
+    fov -= @floatCast(f32, yoffset);
+    if (fov < 1.0) fov = 1.0;
+    if (fov > 45.0) fov = 45.0;
 }
