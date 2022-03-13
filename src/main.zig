@@ -28,6 +28,7 @@ pub fn main() !void {
 
     window.setFramebufferSizeCallback(framebufferSizeCallback);
     if (wireframe_mode) gl.polygonMode(.front_and_back, .line);
+    gl.enable(.depth_test);
 
     const container_image = try Image.load(@embedFile("../assets/container.jpg"), .{});
     defer container_image.unload();
@@ -39,16 +40,47 @@ pub fn main() !void {
     defer shader.deinit();
 
     const vertices = [_]f32{
-        // position, texture coords
-        0.5, 0.5, 0.0, 1.0, 1.0, // top right
-        0.5, -0.5, 0.0, 1.0, 0.0, // bottom right
-        -0.5, -0.5, 0.0, 0.0, 0.0, // bottom left
-        -0.5, 0.5, 0.0, 0.0, 1.0, // top left
-    };
+        -0.5, -0.5, -0.5, 0.0, 0.0,
+        0.5,  -0.5, -0.5, 1.0, 0.0,
+        0.5,  0.5,  -0.5, 1.0, 1.0,
+        0.5,  0.5,  -0.5, 1.0, 1.0,
+        -0.5, 0.5,  -0.5, 0.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0, 0.0,
 
-    const indices = [_]u32{
-        0, 1, 3, // first triangle
-        1, 2, 3, // second triangle
+        -0.5, -0.5, 0.5,  0.0, 0.0,
+        0.5,  -0.5, 0.5,  1.0, 0.0,
+        0.5,  0.5,  0.5,  1.0, 1.0,
+        0.5,  0.5,  0.5,  1.0, 1.0,
+        -0.5, 0.5,  0.5,  0.0, 1.0,
+        -0.5, -0.5, 0.5,  0.0, 0.0,
+
+        -0.5, 0.5,  0.5,  1.0, 0.0,
+        -0.5, 0.5,  -0.5, 1.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+        -0.5, -0.5, 0.5,  0.0, 0.0,
+        -0.5, 0.5,  0.5,  1.0, 0.0,
+
+        0.5,  0.5,  0.5,  1.0, 0.0,
+        0.5,  0.5,  -0.5, 1.0, 1.0,
+        0.5,  -0.5, -0.5, 0.0, 1.0,
+        0.5,  -0.5, -0.5, 0.0, 1.0,
+        0.5,  -0.5, 0.5,  0.0, 0.0,
+        0.5,  0.5,  0.5,  1.0, 0.0,
+
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+        0.5,  -0.5, -0.5, 1.0, 1.0,
+        0.5,  -0.5, 0.5,  1.0, 0.0,
+        0.5,  -0.5, 0.5,  1.0, 0.0,
+        -0.5, -0.5, 0.5,  0.0, 0.0,
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+
+        -0.5, 0.5,  -0.5, 0.0, 1.0,
+        0.5,  0.5,  -0.5, 1.0, 1.0,
+        0.5,  0.5,  0.5,  1.0, 0.0,
+        0.5,  0.5,  0.5,  1.0, 0.0,
+        -0.5, 0.5,  0.5,  0.0, 0.0,
+        -0.5, 0.5,  -0.5, 0.0, 1.0,
     };
 
     const vao = gl.genVertexArray();
@@ -57,16 +89,10 @@ pub fn main() !void {
     const vbo = gl.genBuffer();
     defer vbo.delete();
 
-    const ebo = gl.genBuffer();
-    defer ebo.delete();
-
     vao.bind();
 
     vbo.bind(.array_buffer);
     gl.bufferData(.array_buffer, f32, &vertices, .static_draw);
-
-    ebo.bind(.element_array_buffer);
-    gl.bufferData(.element_array_buffer, u32, &indices, .static_draw);
 
     gl.vertexAttribPointer(0, 3, .float, false, 5 * @sizeOf(f32), 0);
     gl.enableVertexAttribArray(0);
@@ -102,17 +128,23 @@ pub fn main() !void {
     shader.set("texture0", i32, 0);
     shader.set("texture1", i32, 1);
 
+    const view = math.translation(0.0, 0.0, -3.0);
+    const projection = math.perspectiveFovRh(tau / 8.0, 800.0 / 600.0, 0.1, 100.0);
+    shader.set("view", math.Mat, view);
+    shader.set("projection", math.Mat, projection);
+
     while (!window.shouldClose()) {
         processInput(window);
 
+        const t = @floatCast(f32, glfw.getTime());
+
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
-        gl.clear(.{ .color = true });
+        gl.clear(.{ .color = true, .depth = true });
 
-        var trans = math.translation(0.5, -0.5, 0.0);
-        trans = math.mul(math.rotationZ(@floatCast(f32, glfw.getTime())), trans);
-        shader.set("transform", math.Mat, trans);
-
-        gl.drawElements(.triangles, 6, .u32, 0);
+        var model = math.rotationY(t * 0.5);
+        model = math.mul(model, math.rotationX(t));
+        shader.set("model", math.Mat, model);
+        gl.drawArrays(.triangles, 0, 36);
 
         try window.swapBuffers();
         try glfw.pollEvents();
