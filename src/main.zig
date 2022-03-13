@@ -150,6 +150,8 @@ pub fn main() !void {
     while (!window.shouldClose()) {
         processInput(window);
 
+        const t = @floatCast(f32, glfw.getTime());
+
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true, .depth = true });
 
@@ -157,7 +159,7 @@ pub fn main() !void {
             const view = math.translationV(camera);
             shader.set("view", math.Mat, view);
 
-            const angle = 20.0 * @intToFloat(f32, i);
+            const angle = if (i % 3 == 0) 20.0 * @intToFloat(f32, i) else t;
 
             var model = math.translationV(position);
             model = math.mul(math.matFromAxisAngle(.{ 1.0, 0.3, 0.5 }, angle), model);
