@@ -11,6 +11,11 @@ const Shader = @import("./shader.zig").Shader;
 
 const wireframe_mode = false;
 
+const camera_speed = math.f32x4s(0.05);
+var camera_pos = math.f32x4(0.0, 0.0, 3.0, 1.0);
+var camera_front = math.f32x4(0.0, 0.0, -1.0, 1.0);
+var camera_up = math.f32x4(0.0, 1.0, 3.0, 1.0);
+
 pub fn main() !void {
     try glfw.init(.{});
     defer glfw.terminate();
@@ -147,19 +152,15 @@ pub fn main() !void {
     while (!window.shouldClose()) {
         processInput(window);
 
-        const t = @floatCast(f32, glfw.getTime());
+        // const t = @floatCast(f32, glfw.getTime());
 
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true, .depth = true });
 
-        const radius = 10.0;
-        const cam_x = @sin(t) * radius;
-        const cam_z = @cos(t) * radius;
-
         const view = math.lookAtRh(
-            .{ cam_x, 0.0, cam_z, 1.0 },
-            .{ 0.0, 0.0, 0.0, 1.0 },
-            .{ 0.0, 1.0, 0.0, 1.0 },
+            camera_pos,
+            camera_pos + camera_front,
+            camera_up,
         );
         shader.set("view", math.Mat, view);
 
@@ -180,6 +181,19 @@ pub fn main() !void {
 fn processInput(window: glfw.Window) void {
     if (window.getKey(.q) == .press) {
         window.setShouldClose(true);
+    }
+
+    if (window.getKey(.w) == .press) {
+        camera_pos += camera_speed * camera_front;
+    }
+    if (window.getKey(.s) == .press) {
+        camera_pos -= camera_speed * camera_front;
+    }
+    if (window.getKey(.a) == .press) {
+        camera_pos -= camera_speed * math.normalize3(math.cross3(camera_front, camera_up));
+    }
+    if (window.getKey(.d) == .press) {
+        camera_pos += camera_speed * math.normalize3(math.cross3(camera_front, camera_up));
     }
 }
 
