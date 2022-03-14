@@ -6,24 +6,22 @@ const math = @import("zmath");
 
 const tau = std.math.tau;
 
+const Camera = @import("./camera.zig").Camera;
 const Image = @import("./image.zig").Image;
 const Shader = @import("./shader.zig").Shader;
 
 const wireframe_mode = false;
 
-var camera_pos = math.f32x4(0.0, 0.0, 3.0, 1.0);
-var camera_front = math.f32x4(0.0, 0.0, -1.0, 1.0);
-const camera_up = math.f32x4(0.0, 1.0, 0.0, 1.0);
+var camera = Camera.init(
+    math.f32x4(0.0, 0.0, 3.0, 1.0),
+    math.f32x4(0.0, 1.0, 0.0, 1.0),
+);
 
 var delta_time: f32 = 0;
 var last_frame: f32 = 0;
 var first_mouse = true;
 var last_x: f32 = 400.0;
 var last_y: f32 = 300.0;
-
-var yaw: f32 = -90.0;
-var pitch: f32 = 0.0;
-var fov: f32 = 45.0;
 
 pub fn main() !void {
     try glfw.init(.{});
@@ -161,23 +159,19 @@ pub fn main() !void {
     shader.set("texture1", i32, 1);
 
     while (!window.shouldClose()) {
-        processInput(window);
-
         const current_frame = @floatCast(f32, glfw.getTime());
         delta_time = current_frame - last_frame;
         last_frame = current_frame;
 
+        processInput(window);
+
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(.{ .color = true, .depth = true });
 
-        const projection = math.perspectiveFovRh(fov * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
+        const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
         shader.set("projection", math.Mat, projection);
 
-        const view = math.lookAtRh(
-            camera_pos,
-            camera_pos + camera_front,
-            camera_up,
-        );
+        const view = camera.viewMatrix();
         shader.set("view", math.Mat, view);
 
         for (cube_positions) |position, i| {
@@ -199,18 +193,17 @@ fn processInput(window: glfw.Window) void {
         window.setShouldClose(true);
     }
 
-    const camera_speed = math.f32x4s(2.5 * delta_time);
     if (window.getKey(.w) == .press) {
-        camera_pos += camera_speed * camera_front;
+        camera.processKeyboard(.forward, delta_time);
     }
     if (window.getKey(.s) == .press) {
-        camera_pos -= camera_speed * camera_front;
+        camera.processKeyboard(.backward, delta_time);
     }
     if (window.getKey(.a) == .press) {
-        camera_pos -= camera_speed * math.normalize3(math.cross3(camera_front, camera_up));
+        camera.processKeyboard(.left, delta_time);
     }
     if (window.getKey(.d) == .press) {
-        camera_pos += camera_speed * math.normalize3(math.cross3(camera_front, camera_up));
+        camera.processKeyboard(.right, delta_time);
     }
 }
 
@@ -234,27 +227,9 @@ fn cursorPosCallback(_: glfw.Window, xpos: f64, ypos: f64) void {
     last_x = x;
     last_y = y;
 
-    const sensitivity = 0.1;
-    x_offset *= sensitivity;
-    y_offset *= sensitivity;
-
-    yaw += x_offset;
-    pitch += y_offset;
-
-    if (pitch > 89.0) pitch = 89.0;
-    if (pitch < -89.0) pitch = -89.0;
-
-    const direction = math.f32x4(
-        math.cos(yaw * tau / 360.0) * math.cos(pitch * tau / 360.0),
-        math.sin(pitch * tau / 360.0),
-        math.sin(yaw * tau / 360.0) * math.cos(pitch * tau / 360.0),
-        1.0,
-    );
-    camera_front = math.normalize3(direction);
+    camera.processMouseMovement(x_offset, y_offset, .{});
 }
 
 fn scrollCallback(_: glfw.Window, _: f64, yoffset: f64) void {
-    fov -= @floatCast(f32, yoffset);
-    if (fov < 1.0) fov = 1.0;
-    if (fov > 45.0) fov = 45.0;
+    camera.processMouseScroll(@floatCast(f32, yoffset));
 }
