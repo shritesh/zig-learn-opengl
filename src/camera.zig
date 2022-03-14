@@ -12,6 +12,8 @@ pub const CameraMovement = enum {
 pub const Camera = struct {
     position: math.Vec,
     world_up: math.Vec,
+    // Zig doesn't seem to like having more vectors here, cache what we can.
+    front: math.Vec,
 
     yaw: f32 = -90.0,
     pitch: f32 = 0.0,
@@ -21,44 +23,43 @@ pub const Camera = struct {
     zoom: f32 = 45.0,
 
     pub fn init(position: math.Vec, world_up: math.Vec) Camera {
-        return Camera{
+        var camera = Camera{
             .position = position,
             .world_up = world_up,
+            .front = undefined, // Initialized below
         };
+        camera.updateFront();
+        return camera;
     }
 
-    pub fn viewMatrix(camera: Camera) math.Mat {
+    fn updateFront(camera: *Camera) void {
         const direction = math.f32x4(
             math.cos(camera.yaw * tau / 360.0) * math.cos(camera.pitch * tau / 360.0),
             math.sin(camera.pitch * tau / 360.0),
             math.sin(camera.yaw * tau / 360.0) * math.cos(camera.pitch * tau / 360.0),
             1.0,
         );
-        const front = math.normalize3(direction);
-        const right = math.normalize3(math.cross3(front, camera.world_up));
-        const up = math.normalize3(math.cross3(right, front));
+        camera.front = math.normalize3(direction);
+    }
+
+    pub fn viewMatrix(camera: Camera) math.Mat {
+        const right = math.normalize3(math.cross3(camera.front, camera.world_up));
+        const up = math.normalize3(math.cross3(right, camera.front));
 
         return math.lookAtRh(
             camera.position,
-            camera.position + front,
+            camera.position + camera.front,
             up,
         );
     }
 
     pub fn processKeyboard(camera: *Camera, movement: CameraMovement, delta_time: f32) void {
-        const direction = math.f32x4(
-            math.cos(camera.yaw * tau / 360.0) * math.cos(camera.pitch * tau / 360.0),
-            math.sin(camera.pitch * tau / 360.0),
-            math.sin(camera.yaw * tau / 360.0) * math.cos(camera.pitch * tau / 360.0),
-            1.0,
-        );
-        const front = math.normalize3(direction);
-        const right = math.normalize3(math.cross3(front, camera.world_up));
+        const right = math.normalize3(math.cross3(camera.front, camera.world_up));
 
         const velocity = math.f32x4s(camera.movement_speed * delta_time);
         switch (movement) {
-            .forward => camera.position += front * velocity,
-            .backward => camera.position -= front * velocity,
+            .forward => camera.position += camera.front * velocity,
+            .backward => camera.position -= camera.front * velocity,
             .left => camera.position -= right * velocity,
             .right => camera.position += right * velocity,
         }
@@ -72,6 +73,7 @@ pub const Camera = struct {
             if (camera.pitch > 89.0) camera.pitch = 89.0;
             if (camera.pitch < -89.0) camera.pitch = -89.0;
         }
+        camera.updateFront();
     }
 
     pub fn processMouseScroll(camera: *Camera, y_offset: f32) void {
