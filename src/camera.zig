@@ -63,6 +63,7 @@ pub const Camera = struct {
             .left => camera.position -= right * velocity,
             .right => camera.position += right * velocity,
         }
+        camera.position[1] = 0.0;
     }
 
     pub fn processMouseMovement(camera: *Camera, x_offset: f32, y_offset: f32, flags: struct { constrain_pitch: bool = true }) void {
