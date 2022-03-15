@@ -24,6 +24,7 @@ var last_x: f32 = 400.0;
 var last_y: f32 = 300.0;
 
 var light_pos = math.f32x4(1.2, 1.0, 2.0, 1.0);
+var light_strengths = math.f32x4(0.1, 1.0, 0.5, 1.0);
 
 pub fn main() !void {
     try glfw.init(.{});
@@ -133,6 +134,10 @@ pub fn main() !void {
 
         processInput(window);
 
+        var buf: [256]u8 = undefined;
+        const title = try std.fmt.bufPrintZ(&buf, "Ambient: {d:.2}, Diffuse: {d:.2}, Specular: {d:.2}", .{ light_strengths[0], light_strengths[1], light_strengths[2] });
+        try window.setTitle(title);
+
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
         gl.clear(.{ .color = true, .depth = true });
 
@@ -143,6 +148,7 @@ pub fn main() !void {
         // Cube
         lighting_shader.use();
 
+        lighting_shader.setVec3("lightStrengths", light_strengths);
         lighting_shader.setVec3("objectColor", .{ 1.0, 0.5, 0.31 });
         lighting_shader.setVec3("lightColor", .{ 1.0, 1.0, 1.0 });
         lighting_shader.setVec3("lightPos", light_pos);
@@ -189,6 +195,29 @@ fn processInput(window: glfw.Window) void {
     }
     if (window.getKey(.d) == .press) {
         camera.processKeyboard(.right, delta_time);
+    }
+
+    if (window.getKey(.one) == .press) {
+        if (window.getKey(.left_shift) == .press) {
+            light_strengths[0] -= 0.01;
+        } else {
+            light_strengths[0] += 0.01;
+        }
+    }
+
+    if (window.getKey(.two) == .press) {
+        if (window.getKey(.left_shift) == .press) {
+            light_strengths[1] -= 0.01;
+        } else {
+            light_strengths[1] += 0.01;
+        }
+    }
+    if (window.getKey(.three) == .press) {
+        if (window.getKey(.left_shift) == .press) {
+            light_strengths[2] -= 0.01;
+        } else {
+            light_strengths[2] += 0.01;
+        }
     }
 }
 

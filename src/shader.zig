@@ -79,6 +79,6 @@ pub const Shader = struct {
 
     pub fn setVec(shader: Shader, name: [:0]const u8, value: math.Vec) void {
         const location = shader.program.uniformLocation(name);
-        gl.uniform4(location, value[0], value[1], value[2], value[3]);
+        gl.uniform4f(location, value[0], value[1], value[2], value[3]);
     }
 };
