@@ -55,6 +55,9 @@ pub fn main() !void {
     const specular_image = try Image.load(@embedFile("../assets/container2_specular.png"), .{});
     defer specular_image.unload();
 
+    const emission_image = try Image.load(@embedFile("../assets/matrix.jpg"), .{});
+    defer emission_image.unload();
+
     const lighting_shader = try Shader.init("lighting.vert", "lighting.frag");
     defer lighting_shader.deinit();
 
@@ -131,6 +134,9 @@ pub fn main() !void {
     const specular_texture = try textureFromImage(specular_image, .texture_1);
     defer specular_texture.delete();
 
+    const emission_texture = try textureFromImage(emission_image, .texture_2);
+    defer emission_texture.delete();
+
     const light_cube_vao = gl.genVertexArray();
     defer light_cube_vao.delete();
 
@@ -167,6 +173,7 @@ pub fn main() !void {
 
         lighting_shader.seti32("material.diffuse", 0);
         lighting_shader.seti32("material.specular", 1);
+        lighting_shader.seti32("material.emission", 2);
         lighting_shader.setf32("material.shininess", 64.0);
 
         lighting_shader.setMat("projection", projection);
