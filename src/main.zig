@@ -23,6 +23,8 @@ var first_mouse = true;
 var last_x: f32 = 400.0;
 var last_y: f32 = 300.0;
 
+var light_pos = math.f32x4(1.2, 1.0, 2.0, 1.0);
+
 pub fn main() !void {
     try glfw.init(.{});
     defer glfw.terminate();
@@ -47,116 +49,79 @@ pub fn main() !void {
 
     gl.enable(.depth_test);
 
-    const container_image = try Image.load(@embedFile("../assets/container.jpg"), .{});
-    defer container_image.unload();
+    const lighting_shader = try Shader.init(@embedFile("lighting.vert"), @embedFile("lighting.frag"));
+    defer lighting_shader.deinit();
 
-    const face_image = try Image.load(@embedFile("../assets/awesomeface.png"), .{ .flip = true });
-    defer face_image.unload();
-
-    const shader = try Shader.init(@embedFile("triangle.vert"), @embedFile("triangle.frag"));
-    defer shader.deinit();
+    const light_cube_shader = try Shader.init(@embedFile("light_cube.vert"), @embedFile("light_cube.frag"));
+    defer light_cube_shader.deinit();
 
     const vertices = [_]f32{
-        -0.5, -0.5, -0.5, 0.0, 0.0,
-        0.5,  -0.5, -0.5, 1.0, 0.0,
-        0.5,  0.5,  -0.5, 1.0, 1.0,
-        0.5,  0.5,  -0.5, 1.0, 1.0,
-        -0.5, 0.5,  -0.5, 0.0, 1.0,
-        -0.5, -0.5, -0.5, 0.0, 0.0,
+        -0.5, -0.5, -0.5,
+        0.5,  -0.5, -0.5,
+        0.5,  0.5,  -0.5,
+        0.5,  0.5,  -0.5,
+        -0.5, 0.5,  -0.5,
+        -0.5, -0.5, -0.5,
 
-        -0.5, -0.5, 0.5,  0.0, 0.0,
-        0.5,  -0.5, 0.5,  1.0, 0.0,
-        0.5,  0.5,  0.5,  1.0, 1.0,
-        0.5,  0.5,  0.5,  1.0, 1.0,
-        -0.5, 0.5,  0.5,  0.0, 1.0,
-        -0.5, -0.5, 0.5,  0.0, 0.0,
+        -0.5, -0.5, 0.5,
+        0.5,  -0.5, 0.5,
+        0.5,  0.5,  0.5,
+        0.5,  0.5,  0.5,
+        -0.5, 0.5,  0.5,
+        -0.5, -0.5, 0.5,
 
-        -0.5, 0.5,  0.5,  1.0, 0.0,
-        -0.5, 0.5,  -0.5, 1.0, 1.0,
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-        -0.5, -0.5, 0.5,  0.0, 0.0,
-        -0.5, 0.5,  0.5,  1.0, 0.0,
+        -0.5, 0.5,  0.5,
+        -0.5, 0.5,  -0.5,
+        -0.5, -0.5, -0.5,
+        -0.5, -0.5, -0.5,
+        -0.5, -0.5, 0.5,
+        -0.5, 0.5,  0.5,
 
-        0.5,  0.5,  0.5,  1.0, 0.0,
-        0.5,  0.5,  -0.5, 1.0, 1.0,
-        0.5,  -0.5, -0.5, 0.0, 1.0,
-        0.5,  -0.5, -0.5, 0.0, 1.0,
-        0.5,  -0.5, 0.5,  0.0, 0.0,
-        0.5,  0.5,  0.5,  1.0, 0.0,
+        0.5,  0.5,  0.5,
+        0.5,  0.5,  -0.5,
+        0.5,  -0.5, -0.5,
+        0.5,  -0.5, -0.5,
+        0.5,  -0.5, 0.5,
+        0.5,  0.5,  0.5,
 
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-        0.5,  -0.5, -0.5, 1.0, 1.0,
-        0.5,  -0.5, 0.5,  1.0, 0.0,
-        0.5,  -0.5, 0.5,  1.0, 0.0,
-        -0.5, -0.5, 0.5,  0.0, 0.0,
-        -0.5, -0.5, -0.5, 0.0, 1.0,
+        -0.5, -0.5, -0.5,
+        0.5,  -0.5, -0.5,
+        0.5,  -0.5, 0.5,
+        0.5,  -0.5, 0.5,
+        -0.5, -0.5, 0.5,
+        -0.5, -0.5, -0.5,
 
-        -0.5, 0.5,  -0.5, 0.0, 1.0,
-        0.5,  0.5,  -0.5, 1.0, 1.0,
-        0.5,  0.5,  0.5,  1.0, 0.0,
-        0.5,  0.5,  0.5,  1.0, 0.0,
-        -0.5, 0.5,  0.5,  0.0, 0.0,
-        -0.5, 0.5,  -0.5, 0.0, 1.0,
+        -0.5, 0.5,  -0.5,
+        0.5,  0.5,  -0.5,
+        0.5,  0.5,  0.5,
+        0.5,  0.5,  0.5,
+        -0.5, 0.5,  0.5,
+        -0.5, 0.5,  -0.5,
     };
 
-    const cube_positions = [_]math.F32x4{
-        .{ 0.0, 0.0, 0.0 },
-        .{ 2.0, 5.0, -15.0 },
-        .{ -1.5, -2.2, -2.5 },
-        .{ -3.8, -2.0, -12.3 },
-        .{ 2.4, -0.4, -3.5 },
-        .{ -1.7, 3.0, -7.5 },
-        .{ 1.3, -2.0, -2.5 },
-        .{ 1.5, 2.0, -2.5 },
-        .{ 1.5, 0.2, -1.5 },
-        .{ -1.3, 1.0, -1.5 },
-    };
+    const cube_vao = gl.genVertexArray();
+    defer cube_vao.delete();
 
-    const vao = gl.genVertexArray();
-    defer vao.delete();
+    cube_vao.bind();
 
     const vbo = gl.genBuffer();
     defer vbo.delete();
 
-    vao.bind();
-
     vbo.bind(.array_buffer);
     gl.bufferData(.array_buffer, f32, &vertices, .static_draw);
 
-    gl.vertexAttribPointer(0, 3, .float, false, 5 * @sizeOf(f32), 0);
+    gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
     gl.enableVertexAttribArray(0);
 
-    gl.vertexAttribPointer(1, 2, .float, false, 5 * @sizeOf(f32), 3 * @sizeOf(f32));
-    gl.enableVertexAttribArray(1);
+    const light_cube_vao = gl.genVertexArray();
+    defer light_cube_vao.delete();
 
-    const texture0 = gl.genTexture();
-    defer texture0.delete();
+    light_cube_vao.bind();
 
-    gl.activeTexture(.texture_0);
-    texture0.bind(.@"2d");
-    gl.texParameter(.@"2d", .wrap_s, .repeat);
-    gl.texParameter(.@"2d", .wrap_t, .repeat);
-    gl.texParameter(.@"2d", .min_filter, .linear);
-    gl.texParameter(.@"2d", .mag_filter, .linear);
-    gl.textureImage2D(.@"2d", 0, .rgb, container_image.width, container_image.height, .rgb, .unsigned_byte, container_image.data);
-    gl.generateMipmap(.@"2d");
+    vbo.bind(.array_buffer);
 
-    const texture1 = gl.genTexture();
-    defer texture1.delete();
-
-    gl.activeTexture(.texture_1);
-    texture1.bind(.@"2d");
-    gl.texParameter(.@"2d", .wrap_s, .repeat);
-    gl.texParameter(.@"2d", .wrap_t, .repeat);
-    gl.texParameter(.@"2d", .min_filter, .linear);
-    gl.texParameter(.@"2d", .mag_filter, .linear);
-    gl.textureImage2D(.@"2d", 0, .rgb, face_image.width, face_image.height, .rgba, .unsigned_byte, face_image.data);
-    gl.generateMipmap(.@"2d");
-
-    shader.use();
-    shader.seti32("texture0", 0);
-    shader.seti32("texture1", 1);
+    gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
+    gl.enableVertexAttribArray(0);
 
     while (!window.shouldClose()) {
         const current_frame = @floatCast(f32, glfw.getTime());
@@ -165,23 +130,38 @@ pub fn main() !void {
 
         processInput(window);
 
-        gl.clearColor(0.2, 0.3, 0.3, 1.0);
+        gl.clearColor(0.1, 0.1, 0.1, 1.0);
         gl.clear(.{ .color = true, .depth = true });
 
         const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
-        shader.setMat("projection", projection);
-
         const view = camera.viewMatrix();
-        shader.setMat("view", view);
+        var model = math.identity();
 
-        for (cube_positions) |position, i| {
-            const angle = 20.0 * @intToFloat(f32, i);
+        // Cube
+        lighting_shader.use();
 
-            var model = math.translationV(position);
-            model = math.mul(math.matFromAxisAngle(.{ 1.0, 0.3, 0.5 }, angle), model);
-            shader.setMat("model", model);
-            gl.drawArrays(.triangles, 0, 36);
-        }
+        lighting_shader.setVec3("objectColor", .{ 1.0, 0.5, 0.31 });
+        lighting_shader.setVec3("lightColor", .{ 1.0, 1.0, 1.0 });
+
+        lighting_shader.setMat("projection", projection);
+        lighting_shader.setMat("view", view);
+        lighting_shader.setMat("model", model);
+
+        cube_vao.bind();
+        gl.drawArrays(.triangles, 0, 36);
+
+        // Lamp object
+        light_cube_shader.use();
+
+        model = math.translationV(light_pos);
+        model = math.mul(math.scalingV(math.f32x4s(0.2)), model);
+
+        light_cube_shader.setMat("projection", projection);
+        light_cube_shader.setMat("view", view);
+        light_cube_shader.setMat("model", model);
+
+        light_cube_vao.bind();
+        gl.drawArrays(.triangles, 0, 36);
 
         try window.swapBuffers();
         try glfw.pollEvents();
