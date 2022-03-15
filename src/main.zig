@@ -157,12 +157,12 @@ pub fn main() !void {
             1.0,
         );
 
-        const diffuseColor = math.f32x4s(0.5) * light_color;
-        const ambientColor = math.f32x4s(0.2) * diffuseColor;
+        const diffuse_color = math.f32x4s(0.5) * light_color;
+        const ambient_color = math.f32x4s(0.2) * diffuse_color;
 
         lighting_shader.setVec3("light.position", light_pos);
-        lighting_shader.setVec3("light.ambient", ambientColor);
-        lighting_shader.setVec3("light.diffuse", diffuseColor);
+        lighting_shader.setVec3("light.ambient", ambient_color);
+        lighting_shader.setVec3("light.diffuse", diffuse_color);
         lighting_shader.setVec3("light.specular", .{ 1.0, 1.0, 1.0 });
 
         lighting_shader.setMat("projection", projection);
