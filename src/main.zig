@@ -143,10 +143,27 @@ pub fn main() !void {
         // Cube
         lighting_shader.use();
 
-        lighting_shader.setVec3("objectColor", .{ 1.0, 0.5, 0.31 });
-        lighting_shader.setVec3("lightColor", .{ 1.0, 1.0, 1.0 });
-        lighting_shader.setVec3("lightPos", light_pos);
         lighting_shader.setVec3("viewPos", camera.position);
+
+        lighting_shader.setVec3("material.ambient", .{ 1.0, 0.5, 0.31 });
+        lighting_shader.setVec3("material.diffuse", .{ 1.0, 0.5, 0.32 });
+        lighting_shader.setVec3("material.specular", .{ 0.5, 0.5, 0.5 });
+        lighting_shader.setf32("material.shininess", 32.0);
+
+        const light_color = math.f32x4(
+            math.sin(current_frame * 2.0),
+            math.sin(current_frame * 0.7),
+            math.sin(current_frame * 1.3),
+            1.0,
+        );
+
+        const diffuseColor = math.f32x4s(0.5) * light_color;
+        const ambientColor = math.f32x4s(0.2) * diffuseColor;
+
+        lighting_shader.setVec3("light.position", light_pos);
+        lighting_shader.setVec3("light.ambient", ambientColor);
+        lighting_shader.setVec3("light.diffuse", diffuseColor);
+        lighting_shader.setVec3("light.specular", .{ 1.0, 1.0, 1.0 });
 
         lighting_shader.setMat("projection", projection);
         lighting_shader.setMat("view", view);
