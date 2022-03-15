@@ -28,22 +28,36 @@ pub const Shader = struct {
         return Shader{ .program = program };
     }
 
-    pub fn deinit(self: Shader) void {
-        self.program.delete();
+    pub fn deinit(shader: Shader) void {
+        shader.program.delete();
     }
 
-    pub fn use(self: Shader) void {
-        self.program.use();
+    pub fn use(shader: Shader) void {
+        shader.program.use();
     }
 
-    pub fn set(self: Shader, name: [:0]const u8, comptime T: type, value: T) void {
-        const location = self.program.uniformLocation(name);
+    pub fn setf32(shader: Shader, name: [:0]const u8, value: f32) void {
+        const location = shader.program.uniformLocation(name);
+        gl.uniform1f(location, value);
+    }
 
-        switch (T) {
-            f32 => gl.uniform1f(location, value),
-            i32 => gl.uniform1i(location, value),
-            math.Mat => gl.uniformMatrix4fv(location, false, &.{math.matToArray(value)}),
-            else => @compileError("Invalid type"),
-        }
+    pub fn seti32(shader: Shader, name: [:0]const u8, value: i32) void {
+        const location = shader.program.uniformLocation(name);
+        gl.uniform1i(location, value);
+    }
+
+    pub fn setMat(shader: Shader, name: [:0]const u8, value: math.Mat) void {
+        const location = shader.program.uniformLocation(name);
+        gl.uniformMatrix4fv(location, false, &.{math.matToArray(value)});
+    }
+
+    pub fn setVec3(shader: Shader, name: [:0]const u8, value: math.Vec) void {
+        const location = shader.program.uniformLocation(name);
+        gl.uniform3f(location, value[0], value[1], value[2]);
+    }
+
+    pub fn setVec(shader: Shader, name: [:0]const u8, value: math.Vec) void {
+        const location = shader.program.uniformLocation(name);
+        gl.uniform4(location, value[0], value[1], value[2], value[3]);
     }
 };

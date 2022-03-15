@@ -155,8 +155,8 @@ pub fn main() !void {
     gl.generateMipmap(.@"2d");
 
     shader.use();
-    shader.set("texture0", i32, 0);
-    shader.set("texture1", i32, 1);
+    shader.seti32("texture0", 0);
+    shader.seti32("texture1", 1);
 
     while (!window.shouldClose()) {
         const current_frame = @floatCast(f32, glfw.getTime());
@@ -169,17 +169,17 @@ pub fn main() !void {
         gl.clear(.{ .color = true, .depth = true });
 
         const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
-        shader.set("projection", math.Mat, projection);
+        shader.setMat("projection", projection);
 
         const view = camera.viewMatrix();
-        shader.set("view", math.Mat, view);
+        shader.setMat("view", view);
 
         for (cube_positions) |position, i| {
             const angle = 20.0 * @intToFloat(f32, i);
 
             var model = math.translationV(position);
             model = math.mul(math.matFromAxisAngle(.{ 1.0, 0.3, 0.5 }, angle), model);
-            shader.set("model", math.Mat, model);
+            shader.setMat("model", model);
             gl.drawArrays(.triangles, 0, 36);
         }
 
