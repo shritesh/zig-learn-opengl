@@ -162,8 +162,8 @@ pub fn main() !void {
 
         lighting_shader.setVec3("light.position", light_pos);
         lighting_shader.setVec3("light.ambient", .{ 0.2, 0.2, 0.2 });
-        lighting_shader.setVec3("light.diffuse", .{ 0.5, 0.5, 0.5 });
-        lighting_shader.setVec3("light.specular", .{ 1.0, 1.0, 1.0 });
+        lighting_shader.setVec3("light.diffuse", .{ 1.0, 0.5, 0.0 });
+        lighting_shader.setVec3("light.specular", .{ 0.5, 0.5, 0.5 });
 
         lighting_shader.seti32("material.diffuse", 0);
         lighting_shader.seti32("material.specular", 1);
