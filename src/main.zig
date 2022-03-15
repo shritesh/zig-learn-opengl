@@ -146,6 +146,7 @@ pub fn main() !void {
         lighting_shader.setVec3("objectColor", .{ 1.0, 0.5, 0.31 });
         lighting_shader.setVec3("lightColor", .{ 1.0, 1.0, 1.0 });
         lighting_shader.setVec3("lightPos", light_pos);
+        lighting_shader.setVec3("viewPos", camera.position);
 
         lighting_shader.setMat("projection", projection);
         lighting_shader.setMat("view", view);
