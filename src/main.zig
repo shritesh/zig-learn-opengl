@@ -52,7 +52,7 @@ pub fn main() !void {
     const diffuse_image = try Image.load(@embedFile("../assets/container2.png"), .{});
     defer diffuse_image.unload();
 
-    const specular_image = try Image.load(@embedFile("../assets/container2_specular.png"), .{});
+    const specular_image = try Image.load(@embedFile("../assets/container2_specular_color.png"), .{});
     defer specular_image.unload();
 
     const lighting_shader = try Shader.init("lighting.vert", "lighting.frag");
