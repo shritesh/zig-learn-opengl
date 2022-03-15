@@ -2,7 +2,6 @@ const std = @import("std");
 const gl = @import("zgl");
 const math = @import("zmath");
 
-const print = std.debug.print;
 const allocator = std.heap.c_allocator;
 
 pub const Shader = struct {
@@ -19,7 +18,7 @@ pub const Shader = struct {
         if (vertex_shader.get(.compile_status) == 0) {
             const log = try vertex_shader.getCompileLog(allocator);
             defer allocator.free(log);
-            std.debug.print("Error compiling vertex shader {s}:\n{s}\n", .{ vertex_file, log });
+            std.debug.print("Error compiling {s}:\n{s}\n", .{ vertex_file, log });
             return error.ShaderCompilationError;
         }
 
@@ -30,7 +29,7 @@ pub const Shader = struct {
         if (fragment_shader.get(.compile_status) == 0) {
             const log = try fragment_shader.getCompileLog(allocator);
             defer allocator.free(log);
-            std.debug.print("Error compiling fragment shader {s}:\n{s}\n", .{ fragment_file, log });
+            std.debug.print("Error compiling {s}:\n{s}\n", .{ fragment_file, log });
             return error.ShaderCompilationError;
         }
 
@@ -43,7 +42,7 @@ pub const Shader = struct {
         if (program.get(.link_status) == 0) {
             const log = try program.getCompileLog(allocator);
             defer allocator.free(log);
-            std.debug.print("Error linking vertex shader {s} and fragment shader {s}:\n{s}\n", .{ vertex_file, fragment_file, log });
+            std.debug.print("Error linking {s} and {s}:\n{s}\n", .{ vertex_file, fragment_file, log });
             return error.ShaderCompilationError;
         }
 
