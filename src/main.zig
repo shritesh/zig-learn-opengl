@@ -25,6 +25,7 @@ var last_y: f32 = 300.0;
 
 var light_pos = math.f32x4(1.2, 1.0, 2.0, 1.0);
 var light_strengths = math.f32x4(0.1, 1.0, 0.5, 1.0);
+var light_shininess: u32 = 32;
 
 pub fn main() !void {
     try glfw.init(.{});
@@ -135,8 +136,17 @@ pub fn main() !void {
         processInput(window);
 
         var buf: [256]u8 = undefined;
-        const title = try std.fmt.bufPrintZ(&buf, "Ambient: {d:.2}, Diffuse: {d:.2}, Specular: {d:.2}", .{ light_strengths[0], light_strengths[1], light_strengths[2] });
+        const title = try std.fmt.bufPrintZ(&buf, "Ambient: {d:.2}, Diffuse: {d:.2}, Specular: {d:.2}, Shininess: {}", .{
+            light_strengths[0],
+            light_strengths[1],
+            light_strengths[2],
+            light_shininess,
+        });
         try window.setTitle(title);
+
+        light_pos[0] = math.sin(current_frame);
+        light_pos[1] = math.cos(current_frame);
+        light_pos[2] = math.sin(current_frame) + math.cos(current_frame);
 
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
         gl.clear(.{ .color = true, .depth = true });
@@ -149,6 +159,7 @@ pub fn main() !void {
         lighting_shader.use();
 
         lighting_shader.setVec3("lightStrengths", light_strengths);
+        lighting_shader.setu32("shininess", light_shininess);
         lighting_shader.setVec3("objectColor", .{ 1.0, 0.5, 0.31 });
         lighting_shader.setVec3("lightColor", .{ 1.0, 1.0, 1.0 });
         lighting_shader.setVec3("lightPos", light_pos);
@@ -217,6 +228,13 @@ fn processInput(window: glfw.Window) void {
             light_strengths[2] -= 0.01;
         } else {
             light_strengths[2] += 0.01;
+        }
+    }
+    if (window.getKey(.four) == .press) {
+        if (window.getKey(.left_shift) == .press) {
+            if (light_shininess > 0) light_shininess -= 1;
+        } else {
+            light_shininess += 1;
         }
     }
 }

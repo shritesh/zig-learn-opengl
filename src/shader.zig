@@ -62,6 +62,11 @@ pub const Shader = struct {
         gl.uniform1f(location, value);
     }
 
+    pub fn setu32(shader: Shader, name: [:0]const u8, value: u32) void {
+        const location = shader.program.uniformLocation(name);
+        gl.uniform1ui(location, value);
+    }
+
     pub fn seti32(shader: Shader, name: [:0]const u8, value: i32) void {
         const location = shader.program.uniformLocation(name);
         gl.uniform1i(location, value);
