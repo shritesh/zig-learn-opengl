@@ -5,6 +5,7 @@ const c = @cImport({
 pub const Image = struct {
     width: usize,
     height: usize,
+    channels: u8,
     data: [*]u8 = undefined,
 
     pub fn load(contents: []const u8, flags: struct { flip: bool = false }) !Image {
@@ -20,6 +21,7 @@ pub const Image = struct {
             .data = data,
             .width = @intCast(usize, width),
             .height = @intCast(usize, height),
+            .channels = @intCast(u8, n_channels),
         };
     }
 

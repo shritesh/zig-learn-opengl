@@ -49,8 +49,11 @@ pub fn main() !void {
 
     gl.enable(.depth_test);
 
-    const image = try Image.load(@embedFile("../assets/container2.png"), .{});
-    defer image.unload();
+    const diffuse_image = try Image.load(@embedFile("../assets/container2.png"), .{});
+    defer diffuse_image.unload();
+
+    const specular_image = try Image.load(@embedFile("../assets/container2_specular.png"), .{});
+    defer specular_image.unload();
 
     const lighting_shader = try Shader.init("lighting.vert", "lighting.frag");
     defer lighting_shader.deinit();
@@ -122,17 +125,11 @@ pub fn main() !void {
     gl.vertexAttribPointer(2, 2, .float, false, 8 * @sizeOf(f32), 6 * @sizeOf(f32));
     gl.enableVertexAttribArray(2);
 
-    const texture = gl.genTexture();
-    defer texture.delete();
+    const diffuse_texture = try textureFromImage(diffuse_image, .texture_0);
+    defer diffuse_texture.delete();
 
-    gl.activeTexture(.texture_0);
-    texture.bind(.@"2d");
-    gl.texParameter(.@"2d", .wrap_s, .repeat);
-    gl.texParameter(.@"2d", .wrap_t, .repeat);
-    gl.texParameter(.@"2d", .min_filter, .linear);
-    gl.texParameter(.@"2d", .mag_filter, .linear);
-    gl.textureImage2D(.@"2d", 0, .rgba, image.width, image.height, .rgba, .unsigned_byte, image.data);
-    gl.generateMipmap(.@"2d");
+    const specular_texture = try textureFromImage(specular_image, .texture_1);
+    defer specular_texture.delete();
 
     const light_cube_vao = gl.genVertexArray();
     defer light_cube_vao.delete();
@@ -169,7 +166,7 @@ pub fn main() !void {
         lighting_shader.setVec3("light.specular", .{ 1.0, 1.0, 1.0 });
 
         lighting_shader.seti32("material.diffuse", 0);
-        lighting_shader.setVec3("material.specular", .{ 0.5, 0.5, 0.5 });
+        lighting_shader.seti32("material.specular", 1);
         lighting_shader.setf32("material.shininess", 64.0);
 
         lighting_shader.setMat("projection", projection);
@@ -241,4 +238,25 @@ fn cursorPosCallback(_: glfw.Window, xpos: f64, ypos: f64) void {
 
 fn scrollCallback(_: glfw.Window, _: f64, yoffset: f64) void {
     camera.processMouseScroll(@floatCast(f32, yoffset));
+}
+
+fn textureFromImage(image: Image, unit: gl.TextureUnit) !gl.Texture {
+    const format: gl.PixelFormat = switch (image.channels) {
+        1 => .red,
+        3 => .rgb,
+        4 => .rgba,
+        else => return error.ImageFormatError,
+    };
+
+    const texture = gl.genTexture();
+    gl.activeTexture(unit);
+    texture.bind(.@"2d");
+    gl.texParameter(.@"2d", .wrap_s, .repeat);
+    gl.texParameter(.@"2d", .wrap_t, .repeat);
+    gl.texParameter(.@"2d", .min_filter, .linear);
+    gl.texParameter(.@"2d", .mag_filter, .linear);
+    gl.textureImage2D(.@"2d", 0, format, image.width, image.height, format, .unsigned_byte, image.data);
+    gl.generateMipmap(.@"2d");
+
+    return texture;
 }
