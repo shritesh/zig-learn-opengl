@@ -181,6 +181,7 @@ pub fn main() !void {
         light_cube_shader.setMat("projection", projection);
         light_cube_shader.setMat("view", view);
         light_cube_shader.setMat("model", model);
+        light_cube_shader.setVec3("lightColor", light_color);
 
         light_cube_vao.bind();
         gl.drawArrays(.triangles, 0, 36);
