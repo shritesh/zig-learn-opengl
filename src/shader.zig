@@ -1,21 +1,38 @@
+const std = @import("std");
 const gl = @import("zgl");
 const math = @import("zmath");
+
+const print = std.debug.print;
+const allocator = std.heap.c_allocator;
 
 pub const Shader = struct {
     program: gl.Program,
 
-    pub fn init(vertex_src: []const u8, fragment_src: []const u8) !Shader {
+    pub fn init(comptime vertex_file: []const u8, comptime fragment_file: []const u8) !Shader {
+        const vertex_src = @embedFile(vertex_file);
+        const fragment_src = @embedFile(fragment_file);
+
         const vertex_shader = gl.createShader(.vertex);
         defer vertex_shader.delete();
         vertex_shader.source(1, &.{vertex_src});
         vertex_shader.compile();
-        if (vertex_shader.get(.compile_status) == 0) return error.ShaderCompilationError;
+        if (vertex_shader.get(.compile_status) == 0) {
+            const log = try vertex_shader.getCompileLog(allocator);
+            defer allocator.free(log);
+            std.debug.print("Error compiling vertex shader {s}:\n{s}\n", .{ vertex_file, log });
+            return error.ShaderCompilationError;
+        }
 
         const fragment_shader = gl.createShader(.fragment);
         defer fragment_shader.delete();
         fragment_shader.source(1, &.{fragment_src});
         fragment_shader.compile();
-        if (fragment_shader.get(.compile_status) == 0) return error.ShaderCompilationError;
+        if (fragment_shader.get(.compile_status) == 0) {
+            const log = try fragment_shader.getCompileLog(allocator);
+            defer allocator.free(log);
+            std.debug.print("Error compiling fragment shader {s}:\n{s}\n", .{ fragment_file, log });
+            return error.ShaderCompilationError;
+        }
 
         const program = gl.createProgram();
         errdefer program.delete();
@@ -23,7 +40,12 @@ pub const Shader = struct {
         program.attach(fragment_shader);
         program.link();
 
-        if (program.get(.link_status) == 0) return error.ProgramLinkError;
+        if (program.get(.link_status) == 0) {
+            const log = try program.getCompileLog(allocator);
+            defer allocator.free(log);
+            std.debug.print("Error linking vertex shader {s} and fragment shader {s}:\n{s}\n", .{ vertex_file, fragment_file, log });
+            return error.ShaderCompilationError;
+        }
 
         return Shader{ .program = program };
     }

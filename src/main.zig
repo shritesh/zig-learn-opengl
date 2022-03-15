@@ -49,10 +49,10 @@ pub fn main() !void {
 
     gl.enable(.depth_test);
 
-    const lighting_shader = try Shader.init(@embedFile("lighting.vert"), @embedFile("lighting.frag"));
+    const lighting_shader = try Shader.init("lighting.vert", "lighting.frag");
     defer lighting_shader.deinit();
 
-    const light_cube_shader = try Shader.init(@embedFile("light_cube.vert"), @embedFile("light_cube.frag"));
+    const light_cube_shader = try Shader.init("light_cube.vert", "light_cube.frag");
     defer light_cube_shader.deinit();
 
     const vertices = [_]f32{
