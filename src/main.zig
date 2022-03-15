@@ -134,12 +134,12 @@ pub fn main() !void {
         delta_time = current_frame - last_frame;
         last_frame = current_frame;
 
-        frame_counter +%= 1;
         if (frame_counter % 100 == 0) {
             current_material += 1;
             if (current_material == materials.len) current_material = 0;
             try window.setTitle(materials[current_material].name);
         }
+        frame_counter +%= 1;
 
         processInput(window);
 
