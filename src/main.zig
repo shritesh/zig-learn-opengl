@@ -136,6 +136,10 @@ pub fn main() !void {
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
         gl.clear(.{ .color = true, .depth = true });
 
+        light_pos[0] = math.sin(current_frame);
+        light_pos[1] = math.cos(current_frame);
+        light_pos[2] = math.sin(current_frame) + math.cos(current_frame);
+
         const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
         const view = camera.viewMatrix();
         var model = math.identity();
