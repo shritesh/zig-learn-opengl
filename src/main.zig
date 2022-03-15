@@ -49,6 +49,9 @@ pub fn main() !void {
 
     gl.enable(.depth_test);
 
+    const image = try Image.load(@embedFile("../assets/container2.png"), .{});
+    defer image.unload();
+
     const lighting_shader = try Shader.init("lighting.vert", "lighting.frag");
     defer lighting_shader.deinit();
 
@@ -56,47 +59,47 @@ pub fn main() !void {
     defer light_cube_shader.deinit();
 
     const vertices = [_]f32{
-        -0.5, -0.5, -0.5, 0.0,  0.0,  -1.0,
-        0.5,  -0.5, -0.5, 0.0,  0.0,  -1.0,
-        0.5,  0.5,  -0.5, 0.0,  0.0,  -1.0,
-        0.5,  0.5,  -0.5, 0.0,  0.0,  -1.0,
-        -0.5, 0.5,  -0.5, 0.0,  0.0,  -1.0,
-        -0.5, -0.5, -0.5, 0.0,  0.0,  -1.0,
+        -0.5, -0.5, -0.5, 0.0,  0.0,  -1.0, 0.0, 0.0,
+        0.5,  -0.5, -0.5, 0.0,  0.0,  -1.0, 1.0, 0.0,
+        0.5,  0.5,  -0.5, 0.0,  0.0,  -1.0, 1.0, 1.0,
+        0.5,  0.5,  -0.5, 0.0,  0.0,  -1.0, 1.0, 1.0,
+        -0.5, 0.5,  -0.5, 0.0,  0.0,  -1.0, 0.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0,  0.0,  -1.0, 0.0, 0.0,
 
-        -0.5, -0.5, 0.5,  0.0,  0.0,  1.0,
-        0.5,  -0.5, 0.5,  0.0,  0.0,  1.0,
-        0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
-        0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
-        -0.5, 0.5,  0.5,  0.0,  0.0,  1.0,
-        -0.5, -0.5, 0.5,  0.0,  0.0,  1.0,
+        -0.5, -0.5, 0.5,  0.0,  0.0,  1.0,  0.0, 0.0,
+        0.5,  -0.5, 0.5,  0.0,  0.0,  1.0,  1.0, 0.0,
+        0.5,  0.5,  0.5,  0.0,  0.0,  1.0,  1.0, 1.0,
+        0.5,  0.5,  0.5,  0.0,  0.0,  1.0,  1.0, 1.0,
+        -0.5, 0.5,  0.5,  0.0,  0.0,  1.0,  0.0, 1.0,
+        -0.5, -0.5, 0.5,  0.0,  0.0,  1.0,  0.0, 0.0,
 
-        -0.5, 0.5,  0.5,  -1.0, 0.0,  0.0,
-        -0.5, 0.5,  -0.5, -1.0, 0.0,  0.0,
-        -0.5, -0.5, -0.5, -1.0, 0.0,  0.0,
-        -0.5, -0.5, -0.5, -1.0, 0.0,  0.0,
-        -0.5, -0.5, 0.5,  -1.0, 0.0,  0.0,
-        -0.5, 0.5,  0.5,  -1.0, 0.0,  0.0,
+        -0.5, 0.5,  0.5,  -1.0, 0.0,  0.0,  1.0, 0.0,
+        -0.5, 0.5,  -0.5, -1.0, 0.0,  0.0,  1.0, 1.0,
+        -0.5, -0.5, -0.5, -1.0, 0.0,  0.0,  0.0, 1.0,
+        -0.5, -0.5, -0.5, -1.0, 0.0,  0.0,  0.0, 1.0,
+        -0.5, -0.5, 0.5,  -1.0, 0.0,  0.0,  0.0, 0.0,
+        -0.5, 0.5,  0.5,  -1.0, 0.0,  0.0,  1.0, 0.0,
 
-        0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
-        0.5,  0.5,  -0.5, 1.0,  0.0,  0.0,
-        0.5,  -0.5, -0.5, 1.0,  0.0,  0.0,
-        0.5,  -0.5, -0.5, 1.0,  0.0,  0.0,
-        0.5,  -0.5, 0.5,  1.0,  0.0,  0.0,
-        0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+        0.5,  0.5,  0.5,  1.0,  0.0,  0.0,  1.0, 0.0,
+        0.5,  0.5,  -0.5, 1.0,  0.0,  0.0,  1.0, 1.0,
+        0.5,  -0.5, -0.5, 1.0,  0.0,  0.0,  0.0, 1.0,
+        0.5,  -0.5, -0.5, 1.0,  0.0,  0.0,  0.0, 1.0,
+        0.5,  -0.5, 0.5,  1.0,  0.0,  0.0,  0.0, 0.0,
+        0.5,  0.5,  0.5,  1.0,  0.0,  0.0,  1.0, 0.0,
 
-        -0.5, -0.5, -0.5, 0.0,  -1.0, 0.0,
-        0.5,  -0.5, -0.5, 0.0,  -1.0, 0.0,
-        0.5,  -0.5, 0.5,  0.0,  -1.0, 0.0,
-        0.5,  -0.5, 0.5,  0.0,  -1.0, 0.0,
-        -0.5, -0.5, 0.5,  0.0,  -1.0, 0.0,
-        -0.5, -0.5, -0.5, 0.0,  -1.0, 0.0,
+        -0.5, -0.5, -0.5, 0.0,  -1.0, 0.0,  0.0, 1.0,
+        0.5,  -0.5, -0.5, 0.0,  -1.0, 0.0,  1.0, 1.0,
+        0.5,  -0.5, 0.5,  0.0,  -1.0, 0.0,  1.0, 0.0,
+        0.5,  -0.5, 0.5,  0.0,  -1.0, 0.0,  1.0, 0.0,
+        -0.5, -0.5, 0.5,  0.0,  -1.0, 0.0,  0.0, 0.0,
+        -0.5, -0.5, -0.5, 0.0,  -1.0, 0.0,  0.0, 1.0,
 
-        -0.5, 0.5,  -0.5, 0.0,  1.0,  0.0,
-        0.5,  0.5,  -0.5, 0.0,  1.0,  0.0,
-        0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
-        0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
-        -0.5, 0.5,  0.5,  0.0,  1.0,  0.0,
-        -0.5, 0.5,  -0.5, 0.0,  1.0,  0.0,
+        -0.5, 0.5,  -0.5, 0.0,  1.0,  0.0,  0.0, 1.0,
+        0.5,  0.5,  -0.5, 0.0,  1.0,  0.0,  1.0, 1.0,
+        0.5,  0.5,  0.5,  0.0,  1.0,  0.0,  1.0, 0.0,
+        0.5,  0.5,  0.5,  0.0,  1.0,  0.0,  1.0, 0.0,
+        -0.5, 0.5,  0.5,  0.0,  1.0,  0.0,  0.0, 0.0,
+        -0.5, 0.5,  -0.5, 0.0,  1.0,  0.0,  0.0, 1.0,
     };
 
     const cube_vao = gl.genVertexArray();
@@ -110,11 +113,26 @@ pub fn main() !void {
     vbo.bind(.array_buffer);
     gl.bufferData(.array_buffer, f32, &vertices, .static_draw);
 
-    gl.vertexAttribPointer(0, 3, .float, false, 6 * @sizeOf(f32), 0);
+    gl.vertexAttribPointer(0, 3, .float, false, 8 * @sizeOf(f32), 0);
     gl.enableVertexAttribArray(0);
 
-    gl.vertexAttribPointer(1, 3, .float, false, 6 * @sizeOf(f32), 3 * @sizeOf(f32));
+    gl.vertexAttribPointer(1, 3, .float, false, 8 * @sizeOf(f32), 3 * @sizeOf(f32));
     gl.enableVertexAttribArray(1);
+
+    gl.vertexAttribPointer(2, 2, .float, false, 8 * @sizeOf(f32), 6 * @sizeOf(f32));
+    gl.enableVertexAttribArray(2);
+
+    const texture = gl.genTexture();
+    defer texture.delete();
+
+    gl.activeTexture(.texture_0);
+    texture.bind(.@"2d");
+    gl.texParameter(.@"2d", .wrap_s, .repeat);
+    gl.texParameter(.@"2d", .wrap_t, .repeat);
+    gl.texParameter(.@"2d", .min_filter, .linear);
+    gl.texParameter(.@"2d", .mag_filter, .linear);
+    gl.textureImage2D(.@"2d", 0, .rgba, image.width, image.height, .rgba, .unsigned_byte, image.data);
+    gl.generateMipmap(.@"2d");
 
     const light_cube_vao = gl.genVertexArray();
     defer light_cube_vao.delete();
@@ -123,7 +141,7 @@ pub fn main() !void {
 
     vbo.bind(.array_buffer);
 
-    gl.vertexAttribPointer(0, 3, .float, false, 6 * @sizeOf(f32), 0);
+    gl.vertexAttribPointer(0, 3, .float, false, 8 * @sizeOf(f32), 0);
     gl.enableVertexAttribArray(0);
 
     while (!window.shouldClose()) {
@@ -145,25 +163,14 @@ pub fn main() !void {
 
         lighting_shader.setVec3("viewPos", camera.position);
 
-        lighting_shader.setVec3("material.ambient", .{ 1.0, 0.5, 0.31 });
-        lighting_shader.setVec3("material.diffuse", .{ 1.0, 0.5, 0.32 });
-        lighting_shader.setVec3("material.specular", .{ 0.5, 0.5, 0.5 });
-        lighting_shader.setf32("material.shininess", 32.0);
-
-        const light_color = math.f32x4(
-            math.sin(current_frame * 2.0),
-            math.sin(current_frame * 0.7),
-            math.sin(current_frame * 1.3),
-            1.0,
-        );
-
-        const diffuse_color = math.f32x4s(0.5) * light_color;
-        const ambient_color = math.f32x4s(0.2) * diffuse_color;
-
         lighting_shader.setVec3("light.position", light_pos);
-        lighting_shader.setVec3("light.ambient", ambient_color);
-        lighting_shader.setVec3("light.diffuse", diffuse_color);
+        lighting_shader.setVec3("light.ambient", .{ 0.2, 0.2, 0.2 });
+        lighting_shader.setVec3("light.diffuse", .{ 0.5, 0.5, 0.5 });
         lighting_shader.setVec3("light.specular", .{ 1.0, 1.0, 1.0 });
+
+        lighting_shader.seti32("material.diffuse", 0);
+        lighting_shader.setVec3("material.specular", .{ 0.5, 0.5, 0.5 });
+        lighting_shader.setf32("material.shininess", 64.0);
 
         lighting_shader.setMat("projection", projection);
         lighting_shader.setMat("view", view);
