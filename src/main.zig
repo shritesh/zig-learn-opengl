@@ -23,8 +23,6 @@ var first_mouse = true;
 var last_x: f32 = 400.0;
 var last_y: f32 = 300.0;
 
-var light_pos = math.f32x4(1.2, 1.0, 2.0, 1.0);
-
 pub fn main() !void {
     try glfw.init(.{});
     defer glfw.terminate();
@@ -105,6 +103,19 @@ pub fn main() !void {
         -0.5, 0.5,  -0.5, 0.0,  1.0,  0.0,  0.0, 1.0,
     };
 
+    const cube_positions = [_]math.F32x4{
+        .{ 0.0, 0.0, 0.0 },
+        .{ 2.0, 5.0, -15.0 },
+        .{ -1.5, -2.2, -2.5 },
+        .{ -3.8, -2.0, -12.3 },
+        .{ 2.4, -0.4, -3.5 },
+        .{ -1.7, 3.0, -7.5 },
+        .{ 1.3, -2.0, -2.5 },
+        .{ 1.5, 2.0, -2.5 },
+        .{ 1.5, 0.2, -1.5 },
+        .{ -1.3, 1.0, -1.5 },
+    };
+
     const cube_vao = gl.genVertexArray();
     defer cube_vao.delete();
 
@@ -153,14 +164,13 @@ pub fn main() !void {
 
         const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
         const view = camera.viewMatrix();
-        var model = math.identity();
 
         // Cube
         lighting_shader.use();
 
         lighting_shader.setVec3("viewPos", camera.position);
 
-        lighting_shader.setVec3("light.position", light_pos);
+        lighting_shader.setVec3("light.direction", .{ -0.2, -1.0, -0.3 });
         lighting_shader.setVec3("light.ambient", .{ 0.2, 0.2, 0.2 });
         lighting_shader.setVec3("light.diffuse", .{ 0.5, 0.5, 0.5 });
         lighting_shader.setVec3("light.specular", .{ 1.0, 1.0, 1.0 });
@@ -171,23 +181,30 @@ pub fn main() !void {
 
         lighting_shader.setMat("projection", projection);
         lighting_shader.setMat("view", view);
-        lighting_shader.setMat("model", model);
 
         cube_vao.bind();
-        gl.drawArrays(.triangles, 0, 36);
 
-        // Lamp object
-        light_cube_shader.use();
+        for (cube_positions) |position, i| {
+            const angle = 20.0 * @intToFloat(f32, i);
 
-        model = math.translationV(light_pos);
-        model = math.mul(math.scalingV(math.f32x4s(0.2)), model);
+            var model = math.translationV(position);
+            model = math.mul(math.matFromAxisAngle(.{ 1.0, 0.3, 0.5 }, angle), model);
+            lighting_shader.setMat("model", model);
+            gl.drawArrays(.triangles, 0, 36);
+        }
 
-        light_cube_shader.setMat("projection", projection);
-        light_cube_shader.setMat("view", view);
-        light_cube_shader.setMat("model", model);
+        // // Lamp object
+        // light_cube_shader.use();
 
-        light_cube_vao.bind();
-        gl.drawArrays(.triangles, 0, 36);
+        // model = math.translationV(light_pos);
+        // model = math.mul(math.scalingV(math.f32x4s(0.2)), model);
+
+        // light_cube_shader.setMat("projection", projection);
+        // light_cube_shader.setMat("view", view);
+        // light_cube_shader.setMat("model", model);
+
+        // light_cube_vao.bind();
+        // gl.drawArrays(.triangles, 0, 36);
 
         try window.swapBuffers();
         try glfw.pollEvents();
