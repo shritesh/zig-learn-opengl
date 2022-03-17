@@ -23,8 +23,6 @@ var first_mouse = true;
 var last_x: f32 = 400.0;
 var last_y: f32 = 300.0;
 
-const light_pos = math.f32x4(1.2, 1.0, 2.0, 1.0);
-
 pub fn main() !void {
     try glfw.init(.{});
     defer glfw.terminate();
@@ -172,9 +170,13 @@ pub fn main() !void {
 
         lighting_shader.setVec3("viewPos", camera.position);
 
-        lighting_shader.setVec3("light.position", light_pos);
-        lighting_shader.setVec3("light.ambient", .{ 0.2, 0.2, 0.2 });
-        lighting_shader.setVec3("light.diffuse", .{ 0.5, 0.5, 0.5 });
+        lighting_shader.setVec3("light.position", camera.position);
+        lighting_shader.setVec3("light.direction", camera.front());
+        lighting_shader.setf32("light.cutOff", math.cos(@floatCast(f32, 12.5 / 360.0 * tau)));
+        lighting_shader.setf32("light.outerCutOff", math.cos(@floatCast(f32, 17.5 / 360.0 * tau)));
+
+        lighting_shader.setVec3("light.ambient", .{ 0.1, 0.1, 0.1 });
+        lighting_shader.setVec3("light.diffuse", .{ 0.8, 0.8, 0.8 });
         lighting_shader.setVec3("light.specular", .{ 1.0, 1.0, 1.0 });
         lighting_shader.setf32("light.constant", 1.0);
         lighting_shader.setf32("light.linear", 0.09);
@@ -182,7 +184,7 @@ pub fn main() !void {
 
         lighting_shader.seti32("material.diffuse", 0);
         lighting_shader.seti32("material.specular", 1);
-        lighting_shader.setf32("material.shininess", 64.0);
+        lighting_shader.setf32("material.shininess", 32.0);
 
         lighting_shader.setMat("projection", projection);
         lighting_shader.setMat("view", view);
@@ -198,18 +200,18 @@ pub fn main() !void {
             gl.drawArrays(.triangles, 0, 36);
         }
 
-        // Lamp object
-        light_cube_shader.use();
+        // // Lamp object
+        // light_cube_shader.use();
 
-        var model = math.translationV(light_pos);
-        model = math.mul(math.scalingV(math.f32x4s(0.2)), model);
+        // var model = math.translationV(light_pos);
+        // model = math.mul(math.scalingV(math.f32x4s(0.2)), model);
 
-        light_cube_shader.setMat("projection", projection);
-        light_cube_shader.setMat("view", view);
-        light_cube_shader.setMat("model", model);
+        // light_cube_shader.setMat("projection", projection);
+        // light_cube_shader.setMat("view", view);
+        // light_cube_shader.setMat("model", model);
 
-        light_cube_vao.bind();
-        gl.drawArrays(.triangles, 0, 36);
+        // light_cube_vao.bind();
+        // gl.drawArrays(.triangles, 0, 36);
 
         try window.swapBuffers();
         try glfw.pollEvents();
