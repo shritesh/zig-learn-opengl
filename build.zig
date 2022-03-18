@@ -22,6 +22,8 @@ pub fn build(b: *std.build.Builder) void {
     exe.addIncludeDir("lib/stb");
     exe.addCSourceFile("lib/stb/stb_image.c", &.{});
 
+    exe.linkSystemLibrary("assimp");
+
     exe.install();
 
     const run_cmd = exe.run();
