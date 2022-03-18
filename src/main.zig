@@ -116,6 +116,13 @@ pub fn main() !void {
         .{ -1.3, 1.0, -1.5 },
     };
 
+    const point_light_positions = [_]math.F32x4{
+        .{ 0.7, 0.2, 2.0 },
+        .{ 2.3, -3.3, -4.0 },
+        .{ -4.0, 2.0, -12.0 },
+        .{ 0.0, 0.0, -3.0 },
+    };
+
     const cube_vao = gl.genVertexArray();
     defer cube_vao.delete();
 
@@ -170,21 +177,44 @@ pub fn main() !void {
 
         lighting_shader.setVec3("viewPos", camera.position);
 
-        lighting_shader.setVec3("light.position", camera.position);
-        lighting_shader.setVec3("light.direction", camera.front());
-        lighting_shader.setf32("light.cutOff", math.cos(@floatCast(f32, 12.5 / 360.0 * tau)));
-        lighting_shader.setf32("light.outerCutOff", math.cos(@floatCast(f32, 17.5 / 360.0 * tau)));
-
-        lighting_shader.setVec3("light.ambient", .{ 0.1, 0.1, 0.1 });
-        lighting_shader.setVec3("light.diffuse", .{ 0.8, 0.8, 0.8 });
-        lighting_shader.setVec3("light.specular", .{ 1.0, 1.0, 1.0 });
-        lighting_shader.setf32("light.constant", 1.0);
-        lighting_shader.setf32("light.linear", 0.09);
-        lighting_shader.setf32("light.quadratic", 0.032);
-
         lighting_shader.seti32("material.diffuse", 0);
         lighting_shader.seti32("material.specular", 1);
         lighting_shader.setf32("material.shininess", 32.0);
+
+        lighting_shader.setVec3("dirLight.direction", .{ -0.2, -1.0, -0.2 });
+        lighting_shader.setVec3("dirLight.ambient", .{ 0.05, 0.05, 0.05 });
+        lighting_shader.setVec3("dirLight.diffuse", .{ 0.4, 0.4, 0.4 });
+        lighting_shader.setVec3("dirLight.specular", .{ 0.5, 0.5, 0.5 });
+
+        for (point_light_positions) |point_light_position, i| {
+            var buffer: [100]u8 = undefined;
+
+            var name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].position", .{i});
+            lighting_shader.setVec3(name, point_light_position);
+            name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].ambient", .{i});
+            lighting_shader.setVec3(name, .{ 0.05, 0.05, 0.05 });
+            name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].diffuse", .{i});
+            lighting_shader.setVec3(name, .{ 0.8, 0.8, 0.8 });
+            name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].specular", .{i});
+            lighting_shader.setVec3(name, .{ 1.0, 1.0, 1.0 });
+            name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].constant", .{i});
+            lighting_shader.setf32(name, 1.0);
+            name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].linear", .{i});
+            lighting_shader.setf32(name, 0.09);
+            name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].quadratic", .{i});
+            lighting_shader.setf32(name, 0.032);
+        }
+
+        lighting_shader.setVec3("spotLight.position", camera.position);
+        lighting_shader.setVec3("spotLight.direction", camera.front());
+        lighting_shader.setVec3("spotLight.ambient", .{ 0.0, 0.0, 0.0 });
+        lighting_shader.setVec3("spotLight.diffuse", .{ 1.0, 1.0, 1.0 });
+        lighting_shader.setVec3("spotLight.specular", .{ 1.0, 1.0, 1.0 });
+        lighting_shader.setf32("spotLight.constant", 1.0);
+        lighting_shader.setf32("spotLight.linear", 0.09);
+        lighting_shader.setf32("spotLight.quadratic", 0.032);
+        lighting_shader.setf32("spotLight.cutOff", math.cos(@as(f32, 12.5 * tau / 360.0)));
+        lighting_shader.setf32("spotLight.outerCutOff", math.cos(@as(f32, 15 * tau / 360.0)));
 
         lighting_shader.setMat("projection", projection);
         lighting_shader.setMat("view", view);
@@ -200,18 +230,19 @@ pub fn main() !void {
             gl.drawArrays(.triangles, 0, 36);
         }
 
-        // // Lamp object
-        // light_cube_shader.use();
+        // Lamp object
+        light_cube_shader.use();
+        light_cube_vao.bind();
+        light_cube_shader.setMat("projection", projection);
+        light_cube_shader.setMat("view", view);
 
-        // var model = math.translationV(light_pos);
-        // model = math.mul(math.scalingV(math.f32x4s(0.2)), model);
+        for (point_light_positions) |point_light_position| {
+            var model = math.translationV(point_light_position);
+            model = math.mul(math.scalingV(math.f32x4s(0.2)), model);
 
-        // light_cube_shader.setMat("projection", projection);
-        // light_cube_shader.setMat("view", view);
-        // light_cube_shader.setMat("model", model);
-
-        // light_cube_vao.bind();
-        // gl.drawArrays(.triangles, 0, 36);
+            light_cube_shader.setMat("model", model);
+            gl.drawArrays(.triangles, 0, 36);
+        }
 
         try window.swapBuffers();
         try glfw.pollEvents();
