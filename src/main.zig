@@ -3,16 +3,12 @@ const std = @import("std");
 const glfw = @import("glfw");
 const gl = @import("zgl");
 const math = @import("zmath");
-const assimp = @cImport({
-    @cInclude("assimp/cimport.h");
-    @cInclude("assimp/scene.h");
-    @cInclude("assimp/postprocess.h");
-});
 
 const tau = std.math.tau;
 
 const Camera = @import("./camera.zig").Camera;
 const Image = @import("./image.zig").Image;
+const Mesh = @import("./mesh.zig").Mesh;
 const Shader = @import("./shader.zig").Shader;
 
 const wireframe_mode = false;
