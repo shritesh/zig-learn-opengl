@@ -186,23 +186,16 @@ pub fn main() !void {
         lighting_shader.setVec3("dirLight.diffuse", .{ 0.4, 0.4, 0.4 });
         lighting_shader.setVec3("dirLight.specular", .{ 0.5, 0.5, 0.5 });
 
-        for (point_light_positions) |point_light_position, i| {
-            var buffer: [100]u8 = undefined;
+        inline for (point_light_positions) |point_light_position, i| {
+            const prefix = comptime std.fmt.comptimePrint("pointLights[{}].", .{i});
 
-            var name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].position", .{i});
-            lighting_shader.setVec3(name, point_light_position);
-            name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].ambient", .{i});
-            lighting_shader.setVec3(name, .{ 0.05, 0.05, 0.05 });
-            name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].diffuse", .{i});
-            lighting_shader.setVec3(name, .{ 0.8, 0.8, 0.8 });
-            name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].specular", .{i});
-            lighting_shader.setVec3(name, .{ 1.0, 1.0, 1.0 });
-            name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].constant", .{i});
-            lighting_shader.setf32(name, 1.0);
-            name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].linear", .{i});
-            lighting_shader.setf32(name, 0.09);
-            name = try std.fmt.bufPrintZ(&buffer, "pointLights[{}].quadratic", .{i});
-            lighting_shader.setf32(name, 0.032);
+            lighting_shader.setVec3(prefix ++ "position", point_light_position);
+            lighting_shader.setVec3(prefix ++ "ambient", .{ 0.05, 0.05, 0.05 });
+            lighting_shader.setVec3(prefix ++ "diffuse", .{ 0.8, 0.8, 0.8 });
+            lighting_shader.setVec3(prefix ++ "specular", .{ 1.0, 1.0, 1.0 });
+            lighting_shader.setf32(prefix ++ "constant", 1.0);
+            lighting_shader.setf32(prefix ++ "linear", 0.09);
+            lighting_shader.setf32(prefix ++ "quadratic", 0.032);
         }
 
         lighting_shader.setVec3("spotLight.position", camera.position);
