@@ -17,6 +17,8 @@ var camera = Camera.init(
     math.f32x4(0.0, 1.0, 0.0, 1.0),
 );
 
+var light_position = math.f32x4(1.2, 1.0, 2.0, 1.0);
+
 var delta_time: f32 = 0;
 var last_frame: f32 = 0;
 var first_mouse = true;
@@ -70,6 +72,9 @@ pub fn main() !void {
         var model = math.translation(0.0, 0.0, 0.0);
         model = math.mul(math.scaling(1.0, 1.0, 1.0), model);
 
+        shader.setVec3("viewPos", camera.position);
+        shader.setVec3("lightPos", light_position);
+
         shader.setMat("projection", projection);
         shader.setMat("view", view);
         shader.setMat("model", model);
@@ -83,6 +88,12 @@ pub fn main() !void {
 fn processInput(window: glfw.Window) void {
     if (window.getKey(.escape) == .press) {
         window.setShouldClose(true);
+    }
+
+    if (window.getKey(.space) == .press) {
+        light_position[0] = camera.position[0];
+        light_position[1] = camera.position[1];
+        light_position[2] = camera.position[2];
     }
 
     if (window.getKey(.w) == .press) {
