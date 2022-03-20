@@ -189,8 +189,8 @@ pub const Model = struct {
             };
 
             if (mesh.mTextureCoords[0]) |texture_coords| {
-                vertex.tex_coords[0] = texture_coords.*.x;
-                vertex.tex_coords[1] = texture_coords.*.y;
+                vertex.tex_coords[0] = texture_coords[i].x;
+                vertex.tex_coords[1] = texture_coords[i].y;
             }
 
             try vertices.append(vertex);
@@ -253,8 +253,6 @@ pub const Model = struct {
         const texture = gl.genTexture();
 
         texture.bind(.@"2d");
-        defer gl.bindTexture(.invalid, .@"2d");
-
         gl.textureImage2D(.@"2d", 0, format, image.width, image.height, format, .unsigned_byte, image.data);
         gl.generateMipmap(.@"2d");
 
