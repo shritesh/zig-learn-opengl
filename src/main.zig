@@ -46,6 +46,9 @@ pub fn main() !void {
     window.setScrollCallback(scrollCallback);
 
     gl.enable(.depth_test);
+    gl.enable(.blend);
+
+    gl.blendFunc(.src_alpha, .one_minus_src_alpha);
 
     const shader = try Shader.init("shader.vert", "shader.frag");
     defer shader.deinit();
@@ -104,7 +107,7 @@ pub fn main() !void {
         5.0,  -0.5, -5.0, 2.0, 2.0,
     };
 
-    const vegetation = [_]math.Vec{
+    var windows = [_]math.Vec{
         .{ -1.5, 0.0, -0.48 },
         .{ 1.5, 0.0, 0.51 },
         .{ 0.0, 0.0, 0.7 },
@@ -166,8 +169,8 @@ pub fn main() !void {
     const floor_texture = try textureFromFile("assets/metal.png");
     defer floor_texture.delete();
 
-    const grass_texture = try textureFromFile("assets/grass.png");
-    defer grass_texture.delete();
+    const window_texture = try textureFromFile("assets/window.png");
+    defer window_texture.delete();
 
     gl.activeTexture(.texture_0);
 
@@ -180,6 +183,8 @@ pub fn main() !void {
         last_frame = current_frame;
 
         processInput(window);
+
+        std.sort.sort(math.Vec, &windows, camera.position, sortFn);
 
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
         gl.clear(.{ .color = true, .depth = true, .stencil = true });
@@ -212,9 +217,9 @@ pub fn main() !void {
 
         // Grass
         transparent_vao.bind();
-        grass_texture.bind(.@"2d");
-        for (vegetation) |v| {
-            model = math.translationV(v);
+        window_texture.bind(.@"2d");
+        for (windows) |w| {
+            model = math.translationV(w);
             shader.setMat("model", model);
             gl.drawArrays(.triangles, 0, 6);
         }
@@ -299,4 +304,10 @@ fn textureFromFile(file: [:0]const u8) !gl.Texture {
     gl.texParameter(.@"2d", .mag_filter, .linear);
 
     return texture;
+}
+
+fn sortFn(camera_pos: math.Vec, lhs: math.Vec, rhs: math.Vec) bool {
+    const lhs_distance = math.length3(camera_pos - lhs);
+    const rhs_distance = math.length3(camera_pos - rhs);
+    return lhs_distance[0] > rhs_distance[0];
 }
