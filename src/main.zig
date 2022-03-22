@@ -47,9 +47,15 @@ pub fn main() !void {
 
     gl.enable(.depth_test);
     gl.depthFunc(.less);
+    gl.enable(.stencil_test);
+    gl.stencilFunc(.not_equal, 1, 0xff);
+    gl.stencilOp(.keep, .keep, .replace);
 
     const shader = try Shader.init("shader.vert", "shader.frag");
     defer shader.deinit();
+
+    const shader_single_color = try Shader.init("shader.vert", "single_color.frag");
+    defer shader_single_color.deinit();
 
     const cube_vertices = [_]f32{
         -0.5, -0.5, -0.5, 0.0, 0.0,
@@ -145,7 +151,6 @@ pub fn main() !void {
 
     shader.use();
     shader.seti32("texture1", 0);
-    gl.activeTexture(.texture_0);
 
     while (!window.shouldClose()) {
         const current_frame = @floatCast(f32, glfw.getTime());
@@ -155,17 +160,36 @@ pub fn main() !void {
         processInput(window);
 
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
-        gl.clear(.{ .color = true, .depth = true });
+        gl.clear(.{ .color = true, .depth = true, .stencil = true });
 
         const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
         const view = camera.viewMatrix();
         var model = math.identity();
 
+        shader_single_color.use();
+        shader_single_color.setMat("projection", projection);
+        shader_single_color.setMat("view", view);
+
+        shader.use();
         shader.setMat("projection", projection);
         shader.setMat("view", view);
 
+        // Floor
+        // Don't write stencil mask
+        gl.stencilMask(0x00);
+
+        plane_vao.bind();
+        floor_texture.bind(.@"2d");
+        model = math.identity();
+        gl.drawArrays(.triangles, 0, 6);
+
+        // First Render pass. Write to stencil buffer
+        gl.stencilFunc(.always, 1, 0xff);
+        gl.stencilMask(0xff);
+
         // Cubes
         cube_vao.bind();
+        gl.activeTexture(.texture_0);
         cube_texture.bind(.@"2d");
 
         model = math.translation(-1.0, 0.0, -1.0);
@@ -176,11 +200,32 @@ pub fn main() !void {
         shader.setMat("model", model);
         gl.drawArrays(.triangles, 0, 36);
 
-        // Floor
-        plane_vao.bind();
-        floor_texture.bind(.@"2d");
-        model = math.identity();
-        gl.drawArrays(.triangles, 0, 6);
+        // Second render pass. Disable stencil writing.
+        // Slightly larger objects
+        const scaling = math.f32x4(1.1, 1.1, 1.1, 1.0);
+        gl.stencilFunc(.not_equal, 1, 0xff);
+        gl.stencilMask(0x00);
+        gl.disable(.depth_test);
+        shader_single_color.use();
+
+        // Cubes
+        cube_vao.bind();
+        gl.activeTexture(.texture_0);
+        cube_texture.bind(.@"2d");
+
+        model = math.translation(-1.0, 0.0, -1.0);
+        model = math.mul(math.scalingV(scaling), model);
+        shader.setMat("model", model);
+        gl.drawArrays(.triangles, 0, 36);
+
+        model = math.translation(2.0, 0.0, 0.0);
+        model = math.mul(math.scalingV(scaling), model);
+        shader.setMat("model", model);
+        gl.drawArrays(.triangles, 0, 36);
+
+        gl.stencilMask(0xff);
+        gl.stencilFunc(.always, 0, 0xff);
+        gl.enable(.depth_test);
 
         try window.swapBuffers();
         try glfw.pollEvents();
