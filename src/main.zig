@@ -46,73 +46,55 @@ pub fn main() !void {
     window.setScrollCallback(scrollCallback);
 
     gl.enable(.depth_test);
-    gl.enable(.blend);
-
-    gl.blendFunc(.src_alpha, .one_minus_src_alpha);
+    gl.enable(.cull_face);
+    gl.cullFace(.front);
 
     const shader = try Shader.init("shader.vert", "shader.frag");
     defer shader.deinit();
 
     const cube_vertices = [_]f32{
-        -0.5, -0.5, -0.5, 0.0, 0.0,
-        0.5,  -0.5, -0.5, 1.0, 0.0,
-        0.5,  0.5,  -0.5, 1.0, 1.0,
-        0.5,  0.5,  -0.5, 1.0, 1.0,
-        -0.5, 0.5,  -0.5, 0.0, 1.0,
-        -0.5, -0.5, -0.5, 0.0, 0.0,
-
-        -0.5, -0.5, 0.5,  0.0, 0.0,
-        0.5,  -0.5, 0.5,  1.0, 0.0,
-        0.5,  0.5,  0.5,  1.0, 1.0,
-        0.5,  0.5,  0.5,  1.0, 1.0,
-        -0.5, 0.5,  0.5,  0.0, 1.0,
-        -0.5, -0.5, 0.5,  0.0, 0.0,
-
-        -0.5, 0.5,  0.5,  1.0, 0.0,
-        -0.5, 0.5,  -0.5, 1.0, 1.0,
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-        -0.5, -0.5, 0.5,  0.0, 0.0,
-        -0.5, 0.5,  0.5,  1.0, 0.0,
-
-        0.5,  0.5,  0.5,  1.0, 0.0,
-        0.5,  0.5,  -0.5, 1.0, 1.0,
-        0.5,  -0.5, -0.5, 0.0, 1.0,
-        0.5,  -0.5, -0.5, 0.0, 1.0,
-        0.5,  -0.5, 0.5,  0.0, 0.0,
-        0.5,  0.5,  0.5,  1.0, 0.0,
-
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-        0.5,  -0.5, -0.5, 1.0, 1.0,
-        0.5,  -0.5, 0.5,  1.0, 0.0,
-        0.5,  -0.5, 0.5,  1.0, 0.0,
-        -0.5, -0.5, 0.5,  0.0, 0.0,
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-
-        -0.5, 0.5,  -0.5, 0.0, 1.0,
-        0.5,  0.5,  -0.5, 1.0, 1.0,
-        0.5,  0.5,  0.5,  1.0, 0.0,
-        0.5,  0.5,  0.5,  1.0, 0.0,
-        -0.5, 0.5,  0.5,  0.0, 0.0,
-        -0.5, 0.5,  -0.5, 0.0, 1.0,
-    };
-
-    const plane_vertices = [_]f32{
-        5.0,  -0.5, 5.0,  2.0, 0.0,
-        -5.0, -0.5, 5.0,  0.0, 0.0,
-        -5.0, -0.5, -5.0, 0.0, 2.0,
-
-        5.0,  -0.5, 5.0,  2.0, 0.0,
-        -5.0, -0.5, -5.0, 0.0, 2.0,
-        5.0,  -0.5, -5.0, 2.0, 2.0,
-    };
-
-    var windows = [_]math.Vec{
-        .{ -1.5, 0.0, -0.48 },
-        .{ 1.5, 0.0, 0.51 },
-        .{ 0.0, 0.0, 0.7 },
-        .{ -0.3, 0.0, -2.3 },
-        .{ 0.5, 0.0, -0.6 },
+        // Back face
+        -0.5, -0.5, -0.5, 0.0, 0.0, // Bottom-left
+        0.5, 0.5, -0.5, 1.0, 1.0, // top-right
+        0.5, -0.5, -0.5, 1.0, 0.0, // bottom-right
+        0.5, 0.5, -0.5, 1.0, 1.0, // top-right
+        -0.5, -0.5, -0.5, 0.0, 0.0, // bottom-left
+        -0.5, 0.5, -0.5, 0.0, 1.0, // top-left
+        // Front face
+        -0.5, -0.5, 0.5, 0.0, 0.0, // bottom-left
+        0.5, -0.5, 0.5, 1.0, 0.0, // bottom-right
+        0.5, 0.5, 0.5, 1.0, 1.0, // top-right
+        0.5, 0.5, 0.5, 1.0, 1.0, // top-right
+        -0.5, 0.5, 0.5, 0.0, 1.0, // top-left
+        -0.5, -0.5, 0.5, 0.0, 0.0, // bottom-left
+        // Left face
+        -0.5, 0.5, 0.5, 1.0, 0.0, // top-right
+        -0.5, 0.5, -0.5, 1.0, 1.0, // top-left
+        -0.5, -0.5, -0.5, 0.0, 1.0, // bottom-left
+        -0.5, -0.5, -0.5, 0.0, 1.0, // bottom-left
+        -0.5, -0.5, 0.5, 0.0, 0.0, // bottom-right
+        -0.5, 0.5, 0.5, 1.0, 0.0, // top-right
+        // Right face
+        0.5, 0.5, 0.5, 1.0, 0.0, // top-left
+        0.5, -0.5, -0.5, 0.0, 1.0, // bottom-right
+        0.5, 0.5, -0.5, 1.0, 1.0, // top-right
+        0.5, -0.5, -0.5, 0.0, 1.0, // bottom-right
+        0.5, 0.5, 0.5, 1.0, 0.0, // top-left
+        0.5, -0.5, 0.5, 0.0, 0.0, // bottom-left
+        // Bottom face
+        -0.5, -0.5, -0.5, 0.0, 1.0, // top-right
+        0.5, -0.5, -0.5, 1.0, 1.0, // top-left
+        0.5, -0.5, 0.5, 1.0, 0.0, // bottom-left
+        0.5, -0.5, 0.5, 1.0, 0.0, // bottom-left
+        -0.5, -0.5, 0.5, 0.0, 0.0, // bottom-right
+        -0.5, -0.5, -0.5, 0.0, 1.0, // top-right
+        // Top face
+        -0.5, 0.5, -0.5, 0.0, 1.0, // top-left
+        0.5, 0.5, 0.5, 1.0, 0.0, // bottom-right
+        0.5, 0.5, -0.5, 1.0, 1.0, // top-right
+        0.5, 0.5, 0.5, 1.0, 0.0, // bottom-right
+        -0.5, 0.5, -0.5, 0.0, 1.0, // top-left
+        -0.5, 0.5, 0.5, 0.0, 0.0, // bottom-left
     };
 
     const cube_vao = gl.genVertexArray();
@@ -131,46 +113,8 @@ pub fn main() !void {
     gl.enableVertexAttribArray(1);
     gl.vertexAttribPointer(1, 2, .float, false, 5 * @sizeOf(f32), 3 * @sizeOf(f32));
 
-    const plane_vao = gl.genVertexArray();
-    defer plane_vao.delete();
-    plane_vao.bind();
-
-    const plane_vbo = gl.genBuffer();
-    defer plane_vbo.delete();
-
-    plane_vbo.bind(.array_buffer);
-    gl.bufferData(.array_buffer, f32, &plane_vertices, .static_draw);
-
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 3, .float, false, 5 * @sizeOf(f32), 0);
-
-    gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 2, .float, false, 5 * @sizeOf(f32), 3 * @sizeOf(f32));
-
-    const transparent_vao = gl.genVertexArray();
-    defer transparent_vao.delete();
-    transparent_vao.bind();
-
-    const transparent_vbo = gl.genBuffer();
-    defer transparent_vbo.delete();
-
-    transparent_vbo.bind(.array_buffer);
-    gl.bufferData(.array_buffer, f32, &cube_vertices, .static_draw);
-
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 3, .float, false, 5 * @sizeOf(f32), 0);
-
-    gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 2, .float, false, 5 * @sizeOf(f32), 3 * @sizeOf(f32));
-
     const cube_texture = try textureFromFile("assets/marble.jpg");
     defer cube_texture.delete();
-
-    const floor_texture = try textureFromFile("assets/metal.png");
-    defer floor_texture.delete();
-
-    const window_texture = try textureFromFile("assets/window.png");
-    defer window_texture.delete();
 
     gl.activeTexture(.texture_0);
 
@@ -184,45 +128,23 @@ pub fn main() !void {
 
         processInput(window);
 
-        std.sort.sort(math.Vec, &windows, camera.position, sortFn);
-
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
         gl.clear(.{ .color = true, .depth = true, .stencil = true });
 
         const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
         const view = camera.viewMatrix();
-        var model = math.identity();
+        const model = math.identity();
 
         shader.use();
         shader.setMat("projection", projection);
         shader.setMat("view", view);
-
-        // Floor
-        plane_vao.bind();
-        floor_texture.bind(.@"2d");
-        model = math.identity();
-        gl.drawArrays(.triangles, 0, 6);
+        shader.setMat("model", model);
 
         // Cubes
         cube_vao.bind();
         cube_texture.bind(.@"2d");
 
-        model = math.translation(-1.0, 0.0, -1.0);
-        shader.setMat("model", model);
         gl.drawArrays(.triangles, 0, 36);
-
-        model = math.translation(2.0, 0.0, 0.0);
-        shader.setMat("model", model);
-        gl.drawArrays(.triangles, 0, 36);
-
-        // Grass
-        transparent_vao.bind();
-        window_texture.bind(.@"2d");
-        for (windows) |w| {
-            model = math.translationV(w);
-            shader.setMat("model", model);
-            gl.drawArrays(.triangles, 0, 6);
-        }
 
         try window.swapBuffers();
         try glfw.pollEvents();
@@ -304,10 +226,4 @@ fn textureFromFile(file: [:0]const u8) !gl.Texture {
     gl.texParameter(.@"2d", .mag_filter, .linear);
 
     return texture;
-}
-
-fn sortFn(camera_pos: math.Vec, lhs: math.Vec, rhs: math.Vec) bool {
-    const lhs_distance = math.length3(camera_pos - lhs);
-    const rhs_distance = math.length3(camera_pos - rhs);
-    return lhs_distance[0] > rhs_distance[0];
 }
