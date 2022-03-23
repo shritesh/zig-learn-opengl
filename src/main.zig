@@ -46,55 +46,63 @@ pub fn main() !void {
     window.setScrollCallback(scrollCallback);
 
     gl.enable(.depth_test);
-    gl.enable(.cull_face);
-    gl.cullFace(.front);
+    gl.depthFunc(.less);
 
     const shader = try Shader.init("shader.vert", "shader.frag");
     defer shader.deinit();
 
     const cube_vertices = [_]f32{
-        // Back face
-        -0.5, -0.5, -0.5, 0.0, 0.0, // Bottom-left
-        0.5, 0.5, -0.5, 1.0, 1.0, // top-right
-        0.5, -0.5, -0.5, 1.0, 0.0, // bottom-right
-        0.5, 0.5, -0.5, 1.0, 1.0, // top-right
-        -0.5, -0.5, -0.5, 0.0, 0.0, // bottom-left
-        -0.5, 0.5, -0.5, 0.0, 1.0, // top-left
-        // Front face
-        -0.5, -0.5, 0.5, 0.0, 0.0, // bottom-left
-        0.5, -0.5, 0.5, 1.0, 0.0, // bottom-right
-        0.5, 0.5, 0.5, 1.0, 1.0, // top-right
-        0.5, 0.5, 0.5, 1.0, 1.0, // top-right
-        -0.5, 0.5, 0.5, 0.0, 1.0, // top-left
-        -0.5, -0.5, 0.5, 0.0, 0.0, // bottom-left
-        // Left face
-        -0.5, 0.5, 0.5, 1.0, 0.0, // top-right
-        -0.5, 0.5, -0.5, 1.0, 1.0, // top-left
-        -0.5, -0.5, -0.5, 0.0, 1.0, // bottom-left
-        -0.5, -0.5, -0.5, 0.0, 1.0, // bottom-left
-        -0.5, -0.5, 0.5, 0.0, 0.0, // bottom-right
-        -0.5, 0.5, 0.5, 1.0, 0.0, // top-right
-        // Right face
-        0.5, 0.5, 0.5, 1.0, 0.0, // top-left
-        0.5, -0.5, -0.5, 0.0, 1.0, // bottom-right
-        0.5, 0.5, -0.5, 1.0, 1.0, // top-right
-        0.5, -0.5, -0.5, 0.0, 1.0, // bottom-right
-        0.5, 0.5, 0.5, 1.0, 0.0, // top-left
-        0.5, -0.5, 0.5, 0.0, 0.0, // bottom-left
-        // Bottom face
-        -0.5, -0.5, -0.5, 0.0, 1.0, // top-right
-        0.5, -0.5, -0.5, 1.0, 1.0, // top-left
-        0.5, -0.5, 0.5, 1.0, 0.0, // bottom-left
-        0.5, -0.5, 0.5, 1.0, 0.0, // bottom-left
-        -0.5, -0.5, 0.5, 0.0, 0.0, // bottom-right
-        -0.5, -0.5, -0.5, 0.0, 1.0, // top-right
-        // Top face
-        -0.5, 0.5, -0.5, 0.0, 1.0, // top-left
-        0.5, 0.5, 0.5, 1.0, 0.0, // bottom-right
-        0.5, 0.5, -0.5, 1.0, 1.0, // top-right
-        0.5, 0.5, 0.5, 1.0, 0.0, // bottom-right
-        -0.5, 0.5, -0.5, 0.0, 1.0, // top-left
-        -0.5, 0.5, 0.5, 0.0, 0.0, // bottom-left
+        -0.5, -0.5, -0.5, 0.0, 0.0,
+        0.5,  -0.5, -0.5, 1.0, 0.0,
+        0.5,  0.5,  -0.5, 1.0, 1.0,
+        0.5,  0.5,  -0.5, 1.0, 1.0,
+        -0.5, 0.5,  -0.5, 0.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0, 0.0,
+
+        -0.5, -0.5, 0.5,  0.0, 0.0,
+        0.5,  -0.5, 0.5,  1.0, 0.0,
+        0.5,  0.5,  0.5,  1.0, 1.0,
+        0.5,  0.5,  0.5,  1.0, 1.0,
+        -0.5, 0.5,  0.5,  0.0, 1.0,
+        -0.5, -0.5, 0.5,  0.0, 0.0,
+
+        -0.5, 0.5,  0.5,  1.0, 0.0,
+        -0.5, 0.5,  -0.5, 1.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+        -0.5, -0.5, 0.5,  0.0, 0.0,
+        -0.5, 0.5,  0.5,  1.0, 0.0,
+
+        0.5,  0.5,  0.5,  1.0, 0.0,
+        0.5,  0.5,  -0.5, 1.0, 1.0,
+        0.5,  -0.5, -0.5, 0.0, 1.0,
+        0.5,  -0.5, -0.5, 0.0, 1.0,
+        0.5,  -0.5, 0.5,  0.0, 0.0,
+        0.5,  0.5,  0.5,  1.0, 0.0,
+
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+        0.5,  -0.5, -0.5, 1.0, 1.0,
+        0.5,  -0.5, 0.5,  1.0, 0.0,
+        0.5,  -0.5, 0.5,  1.0, 0.0,
+        -0.5, -0.5, 0.5,  0.0, 0.0,
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+
+        -0.5, 0.5,  -0.5, 0.0, 1.0,
+        0.5,  0.5,  -0.5, 1.0, 1.0,
+        0.5,  0.5,  0.5,  1.0, 0.0,
+        0.5,  0.5,  0.5,  1.0, 0.0,
+        -0.5, 0.5,  0.5,  0.0, 0.0,
+        -0.5, 0.5,  -0.5, 0.0, 1.0,
+    };
+
+    const plane_vertices = [_]f32{
+        5.0,  -0.5, 5.0,  2.0, 0.0,
+        -5.0, -0.5, 5.0,  0.0, 0.0,
+        -5.0, -0.5, -5.0, 0.0, 2.0,
+
+        5.0,  -0.5, 5.0,  2.0, 0.0,
+        -5.0, -0.5, -5.0, 0.0, 2.0,
+        5.0,  -0.5, -5.0, 2.0, 2.0,
     };
 
     const cube_vao = gl.genVertexArray();
@@ -113,13 +121,31 @@ pub fn main() !void {
     gl.enableVertexAttribArray(1);
     gl.vertexAttribPointer(1, 2, .float, false, 5 * @sizeOf(f32), 3 * @sizeOf(f32));
 
-    const cube_texture = try textureFromFile("assets/marble.jpg");
+    const plane_vao = gl.genVertexArray();
+    defer plane_vao.delete();
+    plane_vao.bind();
+
+    const plane_vbo = gl.genBuffer();
+    defer plane_vbo.delete();
+
+    plane_vbo.bind(.array_buffer);
+    gl.bufferData(.array_buffer, f32, &plane_vertices, .static_draw);
+
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, .float, false, 5 * @sizeOf(f32), 0);
+
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, .float, false, 5 * @sizeOf(f32), 3 * @sizeOf(f32));
+
+    const cube_texture = try textureFromFile("assets/container.jpg");
     defer cube_texture.delete();
 
-    gl.activeTexture(.texture_0);
+    const floor_texture = try textureFromFile("assets/metal.png");
+    defer floor_texture.delete();
 
     shader.use();
     shader.seti32("texture1", 0);
+    gl.activeTexture(.texture_0);
 
     while (!window.shouldClose()) {
         const current_frame = @floatCast(f32, glfw.getTime());
@@ -129,22 +155,32 @@ pub fn main() !void {
         processInput(window);
 
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
-        gl.clear(.{ .color = true, .depth = true, .stencil = true });
+        gl.clear(.{ .color = true, .depth = true });
 
         const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
         const view = camera.viewMatrix();
-        const model = math.identity();
+        var model = math.identity();
 
-        shader.use();
         shader.setMat("projection", projection);
         shader.setMat("view", view);
-        shader.setMat("model", model);
 
         // Cubes
         cube_vao.bind();
         cube_texture.bind(.@"2d");
 
+        model = math.translation(-1.0, 0.0, -1.0);
+        shader.setMat("model", model);
         gl.drawArrays(.triangles, 0, 36);
+
+        model = math.translation(2.0, 0.0, 0.0);
+        shader.setMat("model", model);
+        gl.drawArrays(.triangles, 0, 36);
+
+        // Floor
+        plane_vao.bind();
+        floor_texture.bind(.@"2d");
+        model = math.identity();
+        gl.drawArrays(.triangles, 0, 6);
 
         try window.swapBuffers();
         try glfw.pollEvents();
@@ -214,14 +250,8 @@ fn textureFromFile(file: [:0]const u8) !gl.Texture {
     gl.textureImage2D(.@"2d", 0, format, image.width, image.height, format, .unsigned_byte, image.data);
     gl.generateMipmap(.@"2d");
 
-    if (format == .rgba) {
-        gl.texParameter(.@"2d", .wrap_s, .clamp_to_edge);
-        gl.texParameter(.@"2d", .wrap_t, .clamp_to_edge);
-    } else {
-        gl.texParameter(.@"2d", .wrap_s, .repeat);
-        gl.texParameter(.@"2d", .wrap_t, .repeat);
-    }
-
+    gl.texParameter(.@"2d", .wrap_s, .repeat);
+    gl.texParameter(.@"2d", .wrap_t, .repeat);
     gl.texParameter(.@"2d", .min_filter, .linear_mipmap_linear);
     gl.texParameter(.@"2d", .mag_filter, .linear);
 
