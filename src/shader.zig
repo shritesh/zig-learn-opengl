@@ -12,35 +12,35 @@ pub const Shader = struct {
         const fragment_src = @embedFile(fragment_file);
 
         const vertex_shader = gl.createShader(.vertex);
-        defer vertex_shader.delete();
-        vertex_shader.source(1, &.{vertex_src});
-        vertex_shader.compile();
-        if (vertex_shader.get(.compile_status) == 0) {
-            const log = try vertex_shader.getCompileLog(allocator);
+        defer gl.deleteShader(vertex_shader);
+        gl.shaderSource(vertex_shader, 1, &.{vertex_src});
+        gl.compileShader(vertex_shader);
+        if (gl.getShader(vertex_shader, .compile_status) == 0) {
+            const log = try gl.getShaderInfoLog(vertex_shader, allocator);
             defer allocator.free(log);
             std.debug.print("Error compiling {s}:\n{s}\n", .{ vertex_file, log });
             return error.ShaderCompilationError;
         }
 
         const fragment_shader = gl.createShader(.fragment);
-        defer fragment_shader.delete();
-        fragment_shader.source(1, &.{fragment_src});
-        fragment_shader.compile();
-        if (fragment_shader.get(.compile_status) == 0) {
-            const log = try fragment_shader.getCompileLog(allocator);
+        defer gl.deleteShader(fragment_shader);
+        gl.shaderSource(fragment_shader, 1, &.{fragment_src});
+        gl.compileShader(fragment_shader);
+        if (gl.getShader(fragment_shader, .compile_status) == 0) {
+            const log = try gl.getShaderInfoLog(fragment_shader, allocator);
             defer allocator.free(log);
             std.debug.print("Error compiling {s}:\n{s}\n", .{ fragment_file, log });
             return error.ShaderCompilationError;
         }
 
         const program = gl.createProgram();
-        errdefer program.delete();
-        program.attach(vertex_shader);
-        program.attach(fragment_shader);
-        program.link();
+        errdefer gl.deleteProgram(program);
+        gl.attachShader(program, vertex_shader);
+        gl.attachShader(program, fragment_shader);
+        gl.linkProgram(program);
 
-        if (program.get(.link_status) == 0) {
-            const log = try program.getCompileLog(allocator);
+        if (gl.getProgram(program, .link_status) == 0) {
+            const log = try gl.getProgramInfoLog(program, allocator);
             defer allocator.free(log);
             std.debug.print("Error linking {s} and {s}:\n{s}\n", .{ vertex_file, fragment_file, log });
             return error.ShaderCompilationError;
@@ -50,40 +50,40 @@ pub const Shader = struct {
     }
 
     pub fn deinit(shader: Shader) void {
-        shader.program.delete();
+        gl.deleteProgram(shader.program);
     }
 
     pub fn use(shader: Shader) void {
-        shader.program.use();
+        gl.useProgram(shader.program);
     }
 
     pub fn setf32(shader: Shader, name: [:0]const u8, value: f32) void {
-        const location = shader.program.uniformLocation(name);
+        const location = gl.getUniformLocation(shader.program, name).?;
         gl.uniform1f(location, value);
     }
 
     pub fn setu32(shader: Shader, name: [:0]const u8, value: u32) void {
-        const location = shader.program.uniformLocation(name);
+        const location = gl.getUniformLocation(shader.program, name).?;
         gl.uniform1ui(location, value);
     }
 
     pub fn seti32(shader: Shader, name: [:0]const u8, value: i32) void {
-        const location = shader.program.uniformLocation(name);
+        const location = gl.getUniformLocation(shader.program, name).?;
         gl.uniform1i(location, value);
     }
 
     pub fn setMat(shader: Shader, name: [:0]const u8, value: math.Mat) void {
-        const location = shader.program.uniformLocation(name);
+        const location = gl.getUniformLocation(shader.program, name).?;
         gl.uniformMatrix4fv(location, false, &.{math.matToArray(value)});
     }
 
     pub fn setVec3(shader: Shader, name: [:0]const u8, value: math.Vec) void {
-        const location = shader.program.uniformLocation(name);
+        const location = gl.getUniformLocation(shader.program, name).?;
         gl.uniform3f(location, value[0], value[1], value[2]);
     }
 
     pub fn setVec(shader: Shader, name: [:0]const u8, value: math.Vec) void {
-        const location = shader.program.uniformLocation(name);
+        const location = gl.getUniformLocation(shader.program, name).?;
         gl.uniform4f(location, value[0], value[1], value[2], value[3]);
     }
 };
