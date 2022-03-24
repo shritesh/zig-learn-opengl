@@ -49,10 +49,10 @@ const Mesh = struct {
         gl.bindVertexArray(mesh.vao);
         defer gl.bindVertexArray(.none);
 
-        gl.bindBuffer(mesh.vbo, .array_buffer);
+        gl.bindBuffer(.array_buffer, mesh.vbo);
         gl.bufferData(.array_buffer, Vertex, vertices, .static_draw);
 
-        gl.bindBuffer(mesh.ebo, .element_array_buffer);
+        gl.bindBuffer(.element_array_buffer, mesh.ebo);
         gl.bufferData(.element_array_buffer, u32, indices, .static_copy);
 
         // Vertex
@@ -96,7 +96,7 @@ const Mesh = struct {
             };
 
             shader.seti32(name, @intCast(i32, i));
-            gl.bindTexture(texture.texture, .@"2d");
+            gl.bindTexture(.@"2d", texture.texture);
         }
         defer gl.activeTexture(.texture_0);
 
@@ -252,7 +252,7 @@ pub const Model = struct {
 
         const texture = gl.genTexture();
 
-        gl.bindTexture(texture, .@"2d");
+        gl.bindTexture(.@"2d", texture);
         gl.texImage2D(.@"2d", 0, format, image.width, image.height, format, .unsigned_byte, image.data);
         gl.generateMipmap(.@"2d");
 

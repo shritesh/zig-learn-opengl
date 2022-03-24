@@ -112,7 +112,7 @@ pub fn main() !void {
     const cube_vbo = gl.genBuffer();
     defer gl.deleteBuffer(cube_vbo);
 
-    gl.bindBuffer(cube_vbo, .array_buffer);
+    gl.bindBuffer(.array_buffer, cube_vbo);
     gl.bufferData(.array_buffer, f32, &cube_vertices, .static_draw);
 
     gl.enableVertexAttribArray(0);
@@ -128,7 +128,7 @@ pub fn main() !void {
     const plane_vbo = gl.genBuffer();
     defer gl.deleteBuffer(plane_vbo);
 
-    gl.bindBuffer(plane_vbo, .array_buffer);
+    gl.bindBuffer(.array_buffer, plane_vbo);
     gl.bufferData(.array_buffer, f32, &plane_vertices, .static_draw);
 
     gl.enableVertexAttribArray(0);
@@ -166,7 +166,7 @@ pub fn main() !void {
 
         // Cubes
         gl.bindVertexArray(cube_vao);
-        gl.bindTexture(cube_texture, .@"2d");
+        gl.bindTexture(.@"2d", cube_texture);
 
         model = math.translation(-1.0, 0.0, -1.0);
         shader.setMat("model", model);
@@ -178,7 +178,7 @@ pub fn main() !void {
 
         // Floor
         gl.bindVertexArray(plane_vao);
-        gl.bindTexture(floor_texture, .@"2d");
+        gl.bindTexture(.@"2d", floor_texture);
         model = math.identity();
         shader.setMat("model", model);
         gl.drawArrays(.triangles, 0, 6);
@@ -247,7 +247,7 @@ fn textureFromFile(file: [:0]const u8) !gl.Texture {
 
     const texture = gl.genTexture();
 
-    gl.bindTexture(texture, .@"2d");
+    gl.bindTexture(.@"2d", texture);
     gl.texImage2D(.@"2d", 0, format, image.width, image.height, format, .unsigned_byte, image.data);
     gl.generateMipmap(.@"2d");
 

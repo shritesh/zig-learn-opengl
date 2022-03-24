@@ -334,7 +334,7 @@ pub fn genBuffer() Buffer {
     return buf;
 }
 
-pub fn bindBuffer(buf: Buffer, target: BufferTarget) void {
+pub fn bindBuffer(target: BufferTarget, buf: Buffer) void {
     c.glBindBuffer(@enumToInt(target), @enumToInt(buf));
     checkError();
 }
@@ -1169,7 +1169,7 @@ pub fn bindTextureUnit(texture: Texture, unit: u32) void {
     checkError();
 }
 
-pub fn bindTexture(texture: Texture, target: TextureTarget) void {
+pub fn bindTexture(target: TextureTarget, texture: Texture) void {
     c.glBindTexture(@enumToInt(target), @enumToInt(texture));
     checkError();
 }
@@ -1569,7 +1569,7 @@ pub fn deleteFramebuffer(buf: Framebuffer) void {
     c.glDeleteFramebuffers(1, &fb_name);
 }
 
-pub fn bindFrameBuffer(buf: Framebuffer, target: FramebufferTarget) void {
+pub fn bindFrameBuffer(target: FramebufferTarget, buf: Framebuffer) void {
     c.glBindFramebuffer(@enumToInt(target), @enumToInt(buf));
     checkError();
 }
