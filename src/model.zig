@@ -46,13 +46,13 @@ const Mesh = struct {
             .ebo = gl.genBuffer(),
         };
 
-        mesh.vao.bind();
-        defer gl.bindVertexArray(.invalid);
+        gl.bindVertexArray(mesh.vao);
+        defer gl.bindVertexArray(.none);
 
-        mesh.vbo.bind(.array_buffer);
+        gl.bindBuffer(mesh.vbo, .array_buffer);
         gl.bufferData(.array_buffer, Vertex, vertices, .static_draw);
 
-        mesh.ebo.bind(.element_array_buffer);
+        gl.bindBuffer(mesh.ebo, .element_array_buffer);
         gl.bufferData(.element_array_buffer, u32, indices, .static_copy);
 
         // Vertex
@@ -71,9 +71,9 @@ const Mesh = struct {
     }
 
     pub fn deinit(mesh: Mesh) void {
-        mesh.ebo.delete();
-        mesh.vbo.delete();
-        mesh.vao.delete();
+        gl.deleteBuffer(mesh.ebo);
+        gl.deleteBuffer(mesh.vbo);
+        gl.deleteVertexArray(mesh.vao);
     }
 
     pub fn draw(mesh: Mesh, shader: Shader) void {
@@ -96,12 +96,12 @@ const Mesh = struct {
             };
 
             shader.seti32(name, @intCast(i32, i));
-            texture.texture.bind(.@"2d");
+            gl.bindTexture(texture.texture, .@"2d");
         }
         defer gl.activeTexture(.texture_0);
 
-        mesh.vao.bind();
-        defer gl.bindVertexArray(.invalid);
+        gl.bindVertexArray(mesh.vao);
+        defer gl.bindVertexArray(.none);
         gl.drawElements(.triangles, mesh.indices.len, .u32, 0);
     }
 };
@@ -144,7 +144,7 @@ pub const Model = struct {
 
     pub fn deinit(model: Model) void {
         for (model.loaded_textures.items) |texture| {
-            texture.texture.delete();
+            gl.deleteTexture(texture.texture);
         }
 
         for (model.meshes.items) |mesh| {
@@ -252,8 +252,8 @@ pub const Model = struct {
 
         const texture = gl.genTexture();
 
-        texture.bind(.@"2d");
-        gl.textureImage2D(.@"2d", 0, format, image.width, image.height, format, .unsigned_byte, image.data);
+        gl.bindTexture(texture, .@"2d");
+        gl.texImage2D(.@"2d", 0, format, image.width, image.height, format, .unsigned_byte, image.data);
         gl.generateMipmap(.@"2d");
 
         gl.texParameter(.@"2d", .wrap_s, .repeat);
