@@ -32,6 +32,7 @@ pub fn main() !void {
         .context_version_minor = 3,
         .opengl_profile = .opengl_core_profile,
         .opengl_forward_compat = builtin.os.tag == .macos,
+        .cocoa_retina_framebuffer = false,
     });
     defer window.destroy();
 
@@ -184,6 +185,8 @@ pub fn main() !void {
     const texture = gl.genTexture();
     gl.bindTexture(.@"2d", texture);
     gl.texImage2D(.@"2d", 0, .rgb, 800, 600, .rgb, .unsigned_byte, null);
+    gl.texParameter(.@"2d", .wrap_s, .clamp_to_edge);
+    gl.texParameter(.@"2d", .wrap_t, .clamp_to_edge);
     gl.texParameter(.@"2d", .min_filter, .linear);
     gl.texParameter(.@"2d", .mag_filter, .linear);
     gl.framebufferTexture2D(.framebuffer, .color0, .@"2d", texture, 0);
