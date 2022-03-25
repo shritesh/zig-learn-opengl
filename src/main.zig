@@ -19,9 +19,7 @@ var camera = Camera.init(
 
 var delta_time: f32 = 0;
 var last_frame: f32 = 0;
-var first_mouse = true;
-var last_x: f32 = 400.0;
-var last_y: f32 = 300.0;
+var last_pos: ?struct { x: f32, y: f32 } = null;
 
 pub fn main() !void {
     try glfw.init(.{});
@@ -290,19 +288,13 @@ fn cursorPosCallback(_: glfw.Window, xpos: f64, ypos: f64) void {
     const x = @floatCast(f32, xpos);
     const y = @floatCast(f32, ypos);
 
-    if (first_mouse) {
-        last_x = x;
-        last_y = y;
-        first_mouse = false;
+    if (last_pos) |last| {
+        var x_offset = x - last.x;
+        var y_offset = last.y - y;
+        camera.processMouseMovement(x_offset, y_offset, .{});
     }
 
-    var x_offset = x - last_x;
-    var y_offset = last_y - y;
-
-    last_x = x;
-    last_y = y;
-
-    camera.processMouseMovement(x_offset, y_offset, .{});
+    last_pos = .{ .x = x, .y = y };
 }
 
 fn scrollCallback(_: glfw.Window, _: f64, yoffset: f64) void {
