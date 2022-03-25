@@ -46,10 +46,12 @@ pub fn main() !void {
     window.setScrollCallback(scrollCallback);
 
     gl.enable(.depth_test);
-    gl.depthFunc(.less);
 
     const shader = try Shader.init("shader.vert", "shader.frag");
     defer shader.deinit();
+
+    const screen_shader = try Shader.init("framebuffer.vert", "framebuffer.frag");
+    defer screen_shader.deinit();
 
     const cube_vertices = [_]f32{
         -0.5, -0.5, -0.5, 0.0, 0.0,
@@ -105,6 +107,16 @@ pub fn main() !void {
         5.0,  -0.5, -5.0, 2.0, 2.0,
     };
 
+    const quad_vertices = [_]f32{
+        -1.0, 1.0,  0.0, 1.0,
+        -1.0, -1.0, 0.0, 0.0,
+        1.0,  -1.0, 1.0, 0.0,
+
+        -1.0, 1.0,  0.0, 1.0,
+        1.0,  -1.0, 1.0, 0.0,
+        1.0,  1.0,  1.0, 1.0,
+    };
+
     const cube_vao = gl.genVertexArray();
     defer gl.deleteVertexArray(cube_vao);
     gl.bindVertexArray(cube_vao);
@@ -137,6 +149,22 @@ pub fn main() !void {
     gl.enableVertexAttribArray(1);
     gl.vertexAttribPointer(1, 2, .float, false, 5 * @sizeOf(f32), 3 * @sizeOf(f32));
 
+    const quad_vao = gl.genVertexArray();
+    defer gl.deleteVertexArray(quad_vao);
+    gl.bindVertexArray(quad_vao);
+
+    const quad_vbo = gl.genBuffer();
+    defer gl.deleteBuffer(quad_vbo);
+
+    gl.bindBuffer(.array_buffer, quad_vbo);
+    gl.bufferData(.array_buffer, f32, &quad_vertices, .static_draw);
+
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, .float, false, 4 * @sizeOf(f32), 0);
+
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, .float, false, 4 * @sizeOf(f32), 2 * @sizeOf(f32));
+
     const cube_texture = try textureFromFile("assets/container.jpg");
     defer gl.deleteTexture(cube_texture);
 
@@ -145,7 +173,30 @@ pub fn main() !void {
 
     shader.use();
     shader.seti32("texture1", 0);
-    gl.activeTexture(.texture_0);
+
+    screen_shader.use();
+    screen_shader.seti32("screenTexture", 0);
+
+    const framebuffer = gl.genFramebuffer();
+    defer gl.deleteFramebuffer(framebuffer);
+    gl.bindFramebuffer(.framebuffer, framebuffer);
+
+    const texture = gl.genTexture();
+    gl.bindTexture(.@"2d", texture);
+    gl.texImage2D(.@"2d", 0, .rgb, 800, 600, .rgb, .unsigned_byte, null);
+    gl.texParameter(.@"2d", .min_filter, .linear);
+    gl.texParameter(.@"2d", .mag_filter, .linear);
+    gl.framebufferTexture2D(.framebuffer, .color0, .@"2d", texture, 0);
+
+    const rbo = gl.genRenderbuffer();
+    defer gl.deleteRenderbuffer(rbo);
+
+    gl.bindRenderbuffer(.renderbuffer, rbo);
+    gl.renderbufferStorage(.renderbuffer, .depth24_stencil8, 800, 600);
+    gl.framebufferRenderbuffer(.framebuffer, .depth_stencil, .renderbuffer, rbo);
+
+    if (gl.checkFramebufferStatus(.framebuffer) != .complete) return error.FramebufferInitError;
+    gl.bindFramebuffer(.framebuffer, .none);
 
     while (!window.shouldClose()) {
         const current_frame = @floatCast(f32, glfw.getTime());
@@ -154,8 +205,14 @@ pub fn main() !void {
 
         processInput(window);
 
+        // Draw in framebuffer
+        gl.bindFramebuffer(.framebuffer, framebuffer);
+        gl.enable(.depth_test);
+
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
         gl.clear(.{ .color = true, .depth = true });
+
+        shader.use();
 
         const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
         const view = camera.viewMatrix();
@@ -166,6 +223,7 @@ pub fn main() !void {
 
         // Cubes
         gl.bindVertexArray(cube_vao);
+        gl.activeTexture(.texture0);
         gl.bindTexture(.@"2d", cube_texture);
 
         model = math.translation(-1.0, 0.0, -1.0);
@@ -181,6 +239,20 @@ pub fn main() !void {
         gl.bindTexture(.@"2d", floor_texture);
         model = math.identity();
         shader.setMat("model", model);
+        gl.drawArrays(.triangles, 0, 6);
+
+        gl.bindVertexArray(.none);
+
+        // Draw in screen
+        gl.bindFramebuffer(.framebuffer, .none);
+        gl.disable(.depth_test);
+
+        gl.clearColor(1.0, 1.0, 1.0, 1.0);
+        gl.clear(.{ .color = true });
+
+        screen_shader.use();
+        gl.bindVertexArray(quad_vao);
+        gl.bindTexture(.@"2d", texture);
         gl.drawArrays(.triangles, 0, 6);
 
         try window.swapBuffers();

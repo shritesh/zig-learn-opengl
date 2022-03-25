@@ -81,7 +81,7 @@ const Mesh = struct {
         var specular: u8 = 1;
 
         for (mesh.textures) |texture, i| {
-            gl.activeTexture(@intToEnum(gl.TextureUnit, @enumToInt(gl.TextureUnit.texture_0) + i));
+            gl.activeTexture(@intToEnum(gl.TextureUnit, @enumToInt(gl.TextureUnit.texture0) + i));
             var buffer: [50]u8 = undefined;
 
             const name = switch (texture.type) {
@@ -98,7 +98,6 @@ const Mesh = struct {
             shader.seti32(name, @intCast(i32, i));
             gl.bindTexture(.@"2d", texture.texture);
         }
-        defer gl.activeTexture(.texture_0);
 
         gl.bindVertexArray(mesh.vao);
         defer gl.bindVertexArray(.none);

@@ -35,6 +35,7 @@ pub const Shader = enum(UInt) { none = 0, _ };
 pub const Program = enum(UInt) { none = 0, _ };
 pub const Texture = enum(UInt) { none = 0, _ };
 pub const Framebuffer = enum(UInt) { none = 0, _ };
+pub const Renderbuffer = enum(UInt) { none = 0, _ };
 
 pub fn load(getProcAddress: anytype) !void {
     if (c.gladLoadGL(@ptrCast(fn ([*c]const u8) callconv(.C) ?fn () callconv(.C) void, getProcAddress)) == 0)
@@ -1180,14 +1181,14 @@ pub fn activeTexture(texture_unit: TextureUnit) void {
 }
 
 pub const TextureUnit = enum(Enum) {
-    texture_0 = c.GL_TEXTURE0,
-    texture_1 = c.GL_TEXTURE1,
-    texture_2 = c.GL_TEXTURE2,
-    texture_3 = c.GL_TEXTURE3,
-    texture_4 = c.GL_TEXTURE4,
-    texture_5 = c.GL_TEXTURE5,
-    texture_6 = c.GL_TEXTURE6,
-    texture_7 = c.GL_TEXTURE7,
+    texture0 = c.GL_TEXTURE0,
+    texture1 = c.GL_TEXTURE1,
+    texture2 = c.GL_TEXTURE2,
+    texture3 = c.GL_TEXTURE3,
+    texture4 = c.GL_TEXTURE4,
+    texture5 = c.GL_TEXTURE5,
+    texture6 = c.GL_TEXTURE6,
+    texture7 = c.GL_TEXTURE7,
 };
 
 pub const TextureParameter = enum(Enum) {
@@ -1377,6 +1378,8 @@ pub const PixelFormat = enum(Enum) {
     bgr_integer = c.GL_BGR_INTEGER,
     rgba_integer = c.GL_RGBA_INTEGER,
     bgra_integer = c.GL_BGRA_INTEGER,
+
+    depth24_stencil8 = c.GL_DEPTH24_STENCIL8,
 };
 
 pub const PixelType = enum(Enum) {
@@ -1569,7 +1572,7 @@ pub fn deleteFramebuffer(buf: Framebuffer) void {
     c.glDeleteFramebuffers(1, &fb_name);
 }
 
-pub fn bindFrameBuffer(target: FramebufferTarget, buf: Framebuffer) void {
+pub fn bindFramebuffer(target: FramebufferTarget, buf: Framebuffer) void {
     c.glBindFramebuffer(@enumToInt(target), @enumToInt(buf));
     checkError();
 }
@@ -1627,8 +1630,52 @@ pub fn checkFramebufferStatus(target: FramebufferTarget) FramebufferStatus {
     return status;
 }
 
+pub fn framebufferRenderbuffer(target: FramebufferTarget, attachment: FramebufferAttachment, renderbuffer_target: RenderbufferTarget, renderbuffer: Renderbuffer) void {
+    c.glFramebufferRenderbuffer(
+        @enumToInt(target),
+        @enumToInt(attachment),
+        @enumToInt(renderbuffer_target),
+        @enumToInt(renderbuffer),
+    );
+
+    checkError();
+}
+
 pub fn drawBuffers(bufs: []const FramebufferAttachment) void {
     c.glDrawBuffers(cs2gl(bufs.len), @ptrCast([*]const UInt, bufs.ptr));
+}
+
+pub const RenderbufferTarget = enum(Enum) {
+    renderbuffer = c.GL_RENDERBUFFER,
+};
+
+pub fn genRenderbuffer() Renderbuffer {
+    var rb_name: UInt = undefined;
+    c.glGenRenderbuffers(1, &rb_name);
+    checkError();
+    const renderbuffer = @intToEnum(Renderbuffer, rb_name);
+    if (renderbuffer == .none) unreachable;
+    return renderbuffer;
+}
+
+pub fn deleteRenderbuffer(buf: Renderbuffer) void {
+    var rb_name = @enumToInt(buf);
+    c.glDeleteRenderbuffers(1, &rb_name);
+}
+
+pub fn bindRenderbuffer(target: RenderbufferTarget, buf: Renderbuffer) void {
+    c.glBindRenderbuffer(@enumToInt(target), @enumToInt(buf));
+    checkError();
+}
+
+pub fn renderbufferStorage(target: RenderbufferTarget, internalformat: PixelFormat, width: usize, height: usize) void {
+    c.glRenderbufferStorage(
+        @enumToInt(target),
+        @enumToInt(internalformat),
+        @intCast(SizeI, width),
+        @intCast(SizeI, height),
+    );
+    checkError();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
