@@ -109,13 +109,13 @@ pub fn main() !void {
     };
 
     const quad_vertices = [_]f32{
-        -1.0, 1.0,  0.0, 1.0,
-        -1.0, -1.0, 0.0, 0.0,
-        1.0,  -1.0, 1.0, 0.0,
+        -0.3, 1.0, 0.0, 1.0,
+        -0.3, 0.7, 0.0, 0.0,
+        0.3,  0.7, 1.0, 0.0,
 
-        -1.0, 1.0,  0.0, 1.0,
-        1.0,  -1.0, 1.0, 0.0,
-        1.0,  1.0,  1.0, 1.0,
+        -0.3, 1.0, 0.0, 1.0,
+        0.3,  0.7, 1.0, 0.0,
+        0.3,  1.0, 1.0, 1.0,
     };
 
     const cube_vao = gl.genVertexArray();
@@ -208,7 +208,7 @@ pub fn main() !void {
 
         processInput(window);
 
-        // Draw in framebuffer
+        // Mirror pass
         gl.bindFramebuffer(.framebuffer, framebuffer);
         gl.enable(.depth_test);
 
@@ -218,7 +218,10 @@ pub fn main() !void {
         shader.use();
 
         const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
-        const view = camera.viewMatrix();
+
+        // Flip camera
+        camera.yaw += 180.0;
+        var view = camera.viewMatrix();
         var model = math.identity();
 
         shader.setMat("projection", projection);
@@ -246,12 +249,42 @@ pub fn main() !void {
 
         gl.bindVertexArray(.none);
 
+        // Reset camera
+        camera.yaw -= 180.0;
+        view = camera.viewMatrix();
+        shader.setMat("view", view);
+
         // Draw in screen
         gl.bindFramebuffer(.framebuffer, .none);
-        gl.disable(.depth_test);
 
-        gl.clearColor(1.0, 1.0, 1.0, 1.0);
-        gl.clear(.{ .color = true });
+        gl.clearColor(0.1, 0.1, 0.1, 1.0);
+        gl.clear(.{ .color = true, .depth = true });
+
+        shader.setMat("projection", projection);
+        shader.setMat("view", view);
+
+        // Cubes
+        gl.bindVertexArray(cube_vao);
+        gl.activeTexture(.texture0);
+        gl.bindTexture(.@"2d", cube_texture);
+
+        model = math.translation(-1.0, 0.0, -1.0);
+        shader.setMat("model", model);
+        gl.drawArrays(.triangles, 0, 36);
+
+        model = math.translation(2.0, 0.0, 0.0);
+        shader.setMat("model", model);
+        gl.drawArrays(.triangles, 0, 36);
+
+        // Floor
+        gl.bindVertexArray(plane_vao);
+        gl.bindTexture(.@"2d", floor_texture);
+        model = math.identity();
+        shader.setMat("model", model);
+        gl.drawArrays(.triangles, 0, 6);
+
+        // Draw texture
+        gl.disable(.depth_test);
 
         screen_shader.use();
         gl.bindVertexArray(quad_vao);
