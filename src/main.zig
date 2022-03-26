@@ -58,6 +58,21 @@ pub fn main() !void {
         0.05,  0.05,  0.0, 1.0, 1.0,
     };
 
+    var translations: [2 * 100]f32 = undefined;
+    {
+        var idx: usize = 0;
+        var y: i16 = -10;
+        while (y < 10) : (y += 2) {
+            var x: i16 = -10;
+            while (x < 10) : (x += 2) {
+                translations[idx * 2] = @intToFloat(f32, x) / 10.0 + 0.1;
+                translations[idx * 2 + 1] = @intToFloat(f32, y) / 10.0 + 0.1;
+
+                idx += 1;
+            }
+        }
+    }
+
     const vao = gl.genVertexArray();
     defer gl.deleteVertexArray(vao);
     gl.bindVertexArray(vao);
@@ -74,19 +89,17 @@ pub fn main() !void {
     gl.enableVertexAttribArray(1);
     gl.vertexAttribPointer(1, 3, .float, false, 5 * @sizeOf(f32), 2 * @sizeOf(f32));
 
+    const ibo = gl.genBuffer();
+    defer gl.deleteBuffer(ibo);
+
+    gl.bindBuffer(.array_buffer, ibo);
+    gl.bufferData(.array_buffer, f32, &translations, .static_draw);
+
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 2, .float, false, 2 * @sizeOf(f32), 0);
+    gl.vertexAttribDivisor(2, 1); // Each instance, not each vertex
+
     shader.use();
-    {
-        comptime var idx = 0;
-        comptime var y = -10;
-        inline while (y < 10) : (y += 2) {
-            comptime var x = -10;
-            inline while (x < 10) : (x += 2) {
-                const attribute = comptime std.fmt.comptimePrint("offsets[{}]", .{idx});
-                shader.setVec2(attribute, .{ @intToFloat(f32, x) / 10.0 + 0.1, @intToFloat(f32, y) / 10.0 + 0.1 });
-                idx += 1;
-            }
-        }
-    }
 
     while (!window.shouldClose()) {
         const current_frame = @floatCast(f32, glfw.getTime());
