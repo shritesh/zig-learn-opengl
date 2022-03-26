@@ -52,9 +52,6 @@ pub fn main() !void {
     const skybox_shader = try Shader.init("skybox.vert", "skybox.frag");
     defer skybox_shader.deinit();
 
-    const cube_texture = try loadTexture("assets/container.jpg");
-    defer gl.deleteTexture(cube_texture);
-
     const skybox_texture = try loadCubemap(.{
         "assets/skybox/right.jpg",
         "assets/skybox/left.jpg",
@@ -66,47 +63,47 @@ pub fn main() !void {
     defer gl.deleteTexture(skybox_texture);
 
     const cube_vertices = [_]f32{
-        -0.5, -0.5, -0.5, 0.0, 0.0,
-        0.5,  -0.5, -0.5, 1.0, 0.0,
-        0.5,  0.5,  -0.5, 1.0, 1.0,
-        0.5,  0.5,  -0.5, 1.0, 1.0,
-        -0.5, 0.5,  -0.5, 0.0, 1.0,
-        -0.5, -0.5, -0.5, 0.0, 0.0,
+        -0.5, -0.5, -0.5, 0.0,  0.0,  -1.0,
+        0.5,  -0.5, -0.5, 0.0,  0.0,  -1.0,
+        0.5,  0.5,  -0.5, 0.0,  0.0,  -1.0,
+        0.5,  0.5,  -0.5, 0.0,  0.0,  -1.0,
+        -0.5, 0.5,  -0.5, 0.0,  0.0,  -1.0,
+        -0.5, -0.5, -0.5, 0.0,  0.0,  -1.0,
 
-        -0.5, -0.5, 0.5,  0.0, 0.0,
-        0.5,  -0.5, 0.5,  1.0, 0.0,
-        0.5,  0.5,  0.5,  1.0, 1.0,
-        0.5,  0.5,  0.5,  1.0, 1.0,
-        -0.5, 0.5,  0.5,  0.0, 1.0,
-        -0.5, -0.5, 0.5,  0.0, 0.0,
+        -0.5, -0.5, 0.5,  0.0,  0.0,  1.0,
+        0.5,  -0.5, 0.5,  0.0,  0.0,  1.0,
+        0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
+        0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
+        -0.5, 0.5,  0.5,  0.0,  0.0,  1.0,
+        -0.5, -0.5, 0.5,  0.0,  0.0,  1.0,
 
-        -0.5, 0.5,  0.5,  1.0, 0.0,
-        -0.5, 0.5,  -0.5, 1.0, 1.0,
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-        -0.5, -0.5, 0.5,  0.0, 0.0,
-        -0.5, 0.5,  0.5,  1.0, 0.0,
+        -0.5, 0.5,  0.5,  -1.0, 0.0,  0.0,
+        -0.5, 0.5,  -0.5, -1.0, 0.0,  0.0,
+        -0.5, -0.5, -0.5, -1.0, 0.0,  0.0,
+        -0.5, -0.5, -0.5, -1.0, 0.0,  0.0,
+        -0.5, -0.5, 0.5,  -1.0, 0.0,  0.0,
+        -0.5, 0.5,  0.5,  -1.0, 0.0,  0.0,
 
-        0.5,  0.5,  0.5,  1.0, 0.0,
-        0.5,  0.5,  -0.5, 1.0, 1.0,
-        0.5,  -0.5, -0.5, 0.0, 1.0,
-        0.5,  -0.5, -0.5, 0.0, 1.0,
-        0.5,  -0.5, 0.5,  0.0, 0.0,
-        0.5,  0.5,  0.5,  1.0, 0.0,
+        0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+        0.5,  0.5,  -0.5, 1.0,  0.0,  0.0,
+        0.5,  -0.5, -0.5, 1.0,  0.0,  0.0,
+        0.5,  -0.5, -0.5, 1.0,  0.0,  0.0,
+        0.5,  -0.5, 0.5,  1.0,  0.0,  0.0,
+        0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
 
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-        0.5,  -0.5, -0.5, 1.0, 1.0,
-        0.5,  -0.5, 0.5,  1.0, 0.0,
-        0.5,  -0.5, 0.5,  1.0, 0.0,
-        -0.5, -0.5, 0.5,  0.0, 0.0,
-        -0.5, -0.5, -0.5, 0.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0,  -1.0, 0.0,
+        0.5,  -0.5, -0.5, 0.0,  -1.0, 0.0,
+        0.5,  -0.5, 0.5,  0.0,  -1.0, 0.0,
+        0.5,  -0.5, 0.5,  0.0,  -1.0, 0.0,
+        -0.5, -0.5, 0.5,  0.0,  -1.0, 0.0,
+        -0.5, -0.5, -0.5, 0.0,  -1.0, 0.0,
 
-        -0.5, 0.5,  -0.5, 0.0, 1.0,
-        0.5,  0.5,  -0.5, 1.0, 1.0,
-        0.5,  0.5,  0.5,  1.0, 0.0,
-        0.5,  0.5,  0.5,  1.0, 0.0,
-        -0.5, 0.5,  0.5,  0.0, 0.0,
-        -0.5, 0.5,  -0.5, 0.0, 1.0,
+        -0.5, 0.5,  -0.5, 0.0,  1.0,  0.0,
+        0.5,  0.5,  -0.5, 0.0,  1.0,  0.0,
+        0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+        0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+        -0.5, 0.5,  0.5,  0.0,  1.0,  0.0,
+        -0.5, 0.5,  -0.5, 0.0,  1.0,  0.0,
     };
 
     const skybox_vertices = [_]f32{
@@ -164,10 +161,10 @@ pub fn main() !void {
     gl.bufferData(.array_buffer, f32, &cube_vertices, .static_draw);
 
     gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 3, .float, false, 5 * @sizeOf(f32), 0);
+    gl.vertexAttribPointer(0, 3, .float, false, 6 * @sizeOf(f32), 0);
 
     gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 2, .float, false, 5 * @sizeOf(f32), 3 * @sizeOf(f32));
+    gl.vertexAttribPointer(1, 3, .float, false, 6 * @sizeOf(f32), 3 * @sizeOf(f32));
 
     const skybox_vao = gl.genVertexArray();
     defer gl.deleteVertexArray(skybox_vao);
@@ -183,7 +180,7 @@ pub fn main() !void {
     gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
 
     shader.use();
-    shader.seti32("texture1", 0);
+    shader.seti32("skybox", 0);
 
     skybox_shader.use();
     skybox_shader.seti32("skybox", 0);
@@ -209,9 +206,10 @@ pub fn main() !void {
         shader.setMat("projection", projection);
         shader.setMat("view", view);
         shader.setMat("model", model);
+        shader.setVec3("cameraPos", camera.position);
 
         gl.bindVertexArray(cube_vao);
-        gl.bindTexture(.@"2d", cube_texture);
+        gl.bindTexture(.cube_map, skybox_texture);
         gl.drawArrays(.triangles, 0, 36);
 
         // Draw skybox
