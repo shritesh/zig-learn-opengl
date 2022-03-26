@@ -47,8 +47,11 @@ pub fn main() !void {
 
     gl.enable(.depth_test);
 
-    const shader = try Shader.init("shader.vert", "shader.frag", "shader.geom");
+    const shader = try Shader.init("shader.vert", "shader.frag", null);
     defer shader.deinit();
+
+    const normal_shader = try Shader.init("normal.vert", "normal.frag", "normal.geom");
+    defer normal_shader.deinit();
 
     const backpack = try Model.init(std.heap.c_allocator, "assets/backpack/backpack.obj");
     defer backpack.deinit();
@@ -69,14 +72,19 @@ pub fn main() !void {
         const view = camera.viewMatrix();
         const model = math.identity();
 
-        shader.setf32("time", current_frame);
-        // shader.setVec3("viewPos", camera.position);
-        // shader.setVec3("lightPos", light_position);
+        shader.setVec3("viewPos", camera.position);
+        shader.setVec3("lightPos", light_position);
 
         shader.setMat("projection", projection);
         shader.setMat("view", view);
         shader.setMat("model", model);
         backpack.draw(shader);
+
+        normal_shader.use();
+        normal_shader.setMat("projection", projection);
+        normal_shader.setMat("view", view);
+        normal_shader.setMat("model", model);
+        backpack.draw(normal_shader);
 
         try window.swapBuffers();
         try glfw.pollEvents();

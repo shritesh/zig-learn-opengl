@@ -60,32 +60,32 @@ pub const Shader = struct {
     }
 
     pub fn setf32(shader: Shader, name: [:0]const u8, value: f32) void {
-        const location = gl.getUniformLocation(shader.program, name).?;
+        const location = gl.getUniformLocation(shader.program, name) orelse return;
         gl.uniform1f(location, value);
     }
 
     pub fn setu32(shader: Shader, name: [:0]const u8, value: u32) void {
-        const location = gl.getUniformLocation(shader.program, name).?;
+        const location = gl.getUniformLocation(shader.program, name) orelse return;
         gl.uniform1ui(location, value);
     }
 
     pub fn seti32(shader: Shader, name: [:0]const u8, value: i32) void {
-        const location = gl.getUniformLocation(shader.program, name).?;
+        const location = gl.getUniformLocation(shader.program, name) orelse return;
         gl.uniform1i(location, value);
     }
 
     pub fn setMat(shader: Shader, name: [:0]const u8, value: math.Mat) void {
-        const location = gl.getUniformLocation(shader.program, name).?;
+        const location = gl.getUniformLocation(shader.program, name) orelse return;
         gl.uniformMatrix4fv(location, false, &.{math.matToArray(value)});
     }
 
     pub fn setVec3(shader: Shader, name: [:0]const u8, value: math.Vec) void {
-        const location = gl.getUniformLocation(shader.program, name).?;
+        const location = gl.getUniformLocation(shader.program, name) orelse return;
         gl.uniform3f(location, value[0], value[1], value[2]);
     }
 
     pub fn setVec(shader: Shader, name: [:0]const u8, value: math.Vec) void {
-        const location = gl.getUniformLocation(shader.program, name).?;
+        const location = gl.getUniformLocation(shader.program, name) orelse return;
         gl.uniform4f(location, value[0], value[1], value[2], value[3]);
     }
 };
