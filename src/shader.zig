@@ -79,13 +79,18 @@ pub const Shader = struct {
         gl.uniformMatrix4fv(location, false, &.{math.matToArray(value)});
     }
 
-    pub fn setVec3(shader: Shader, name: [:0]const u8, value: math.Vec) void {
-        const location = gl.getUniformLocation(shader.program, name) orelse return;
-        gl.uniform3f(location, value[0], value[1], value[2]);
-    }
-
     pub fn setVec(shader: Shader, name: [:0]const u8, value: math.Vec) void {
         const location = gl.getUniformLocation(shader.program, name) orelse return;
         gl.uniform4f(location, value[0], value[1], value[2], value[3]);
+    }
+
+    pub fn setVec2(shader: Shader, name: [:0]const u8, value: math.Vec) void {
+        const location = gl.getUniformLocation(shader.program, name) orelse return;
+        gl.uniform2f(location, value[0], value[1]);
+    }
+
+    pub fn setVec3(shader: Shader, name: [:0]const u8, value: math.Vec) void {
+        const location = gl.getUniformLocation(shader.program, name) orelse return;
+        gl.uniform3f(location, value[0], value[1], value[2]);
     }
 };

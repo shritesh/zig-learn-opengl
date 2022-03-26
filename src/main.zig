@@ -16,8 +16,6 @@ var camera = Camera.init(
     math.f32x4(0.0, 1.0, 0.0, 1.0),
 );
 
-var light_position = math.f32x4(1.2, 1.0, 2.0, 1.0);
-
 var delta_time: f32 = 0;
 var last_frame: f32 = 0;
 var last_pos: ?struct { x: f32, y: f32 } = null;
@@ -50,11 +48,45 @@ pub fn main() !void {
     const shader = try Shader.init("shader.vert", "shader.frag", null);
     defer shader.deinit();
 
-    const normal_shader = try Shader.init("normal.vert", "normal.frag", "normal.geom");
-    defer normal_shader.deinit();
+    const quad_vertices = [_]f32{
+        -0.05, 0.05,  1.0, 0.0, 0.0,
+        0.05,  -0.05, 0.0, 1.0, 0.0,
+        -0.05, -0.05, 0.0, 0.0, 1.0,
 
-    const backpack = try Model.init(std.heap.c_allocator, "assets/backpack/backpack.obj");
-    defer backpack.deinit();
+        -0.05, 0.05,  1.0, 0.0, 0.0,
+        0.05,  -0.05, 0.0, 1.0, 0.0,
+        0.05,  0.05,  0.0, 1.0, 1.0,
+    };
+
+    const vao = gl.genVertexArray();
+    defer gl.deleteVertexArray(vao);
+    gl.bindVertexArray(vao);
+
+    const vbo = gl.genBuffer();
+    defer gl.deleteBuffer(vbo);
+
+    gl.bindBuffer(.array_buffer, vbo);
+    gl.bufferData(.array_buffer, f32, &quad_vertices, .static_draw);
+
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, .float, false, 5 * @sizeOf(f32), 0);
+
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 3, .float, false, 5 * @sizeOf(f32), 2 * @sizeOf(f32));
+
+    shader.use();
+    {
+        comptime var idx = 0;
+        comptime var y = -10;
+        inline while (y < 10) : (y += 2) {
+            comptime var x = -10;
+            inline while (x < 10) : (x += 2) {
+                const attribute = comptime std.fmt.comptimePrint("offsets[{}]", .{idx});
+                shader.setVec2(attribute, .{ @intToFloat(f32, x) / 10.0 + 0.1, @intToFloat(f32, y) / 10.0 + 0.1 });
+                idx += 1;
+            }
+        }
+    }
 
     while (!window.shouldClose()) {
         const current_frame = @floatCast(f32, glfw.getTime());
@@ -68,23 +100,7 @@ pub fn main() !void {
 
         shader.use();
 
-        const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
-        const view = camera.viewMatrix();
-        const model = math.identity();
-
-        shader.setVec3("viewPos", camera.position);
-        shader.setVec3("lightPos", light_position);
-
-        shader.setMat("projection", projection);
-        shader.setMat("view", view);
-        shader.setMat("model", model);
-        backpack.draw(shader);
-
-        normal_shader.use();
-        normal_shader.setMat("projection", projection);
-        normal_shader.setMat("view", view);
-        normal_shader.setMat("model", model);
-        backpack.draw(normal_shader);
+        gl.drawArraysInstanced(.triangles, 0, 6, 100);
 
         try window.swapBuffers();
         try glfw.pollEvents();
@@ -94,11 +110,6 @@ pub fn main() !void {
 fn processInput(window: glfw.Window) void {
     if (window.getKey(.escape) == .press) {
         window.setShouldClose(true);
-    }
-    if (window.getKey(.space) == .press) {
-        light_position[0] = camera.position[0];
-        light_position[1] = camera.position[1];
-        light_position[2] = camera.position[2];
     }
 
     if (window.getKey(.w) == .press) {
