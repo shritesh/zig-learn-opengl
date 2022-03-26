@@ -7,46 +7,48 @@ const allocator = std.heap.c_allocator;
 pub const Shader = struct {
     program: gl.Program,
 
-    pub fn init(comptime vertex_file: []const u8, comptime fragment_file: []const u8) !Shader {
-        const vertex_src = @embedFile(vertex_file);
-        const fragment_src = @embedFile(fragment_file);
-
-        const vertex_shader = gl.createShader(.vertex);
+    pub fn init(comptime vertex_file: []const u8, comptime fragment_file: []const u8, comptime geometry_file: ?[]const u8) !Shader {
+        const vertex_shader = try compileShader(vertex_file, .vertex);
         defer gl.deleteShader(vertex_shader);
-        gl.shaderSource(vertex_shader, 1, &.{vertex_src});
-        gl.compileShader(vertex_shader);
-        if (gl.getShader(vertex_shader, .compile_status) == 0) {
-            const log = try gl.getShaderInfoLog(vertex_shader, allocator);
-            defer allocator.free(log);
-            std.debug.print("Error compiling {s}:\n{s}\n", .{ vertex_file, log });
-            return error.ShaderCompilationError;
-        }
 
-        const fragment_shader = gl.createShader(.fragment);
+        const fragment_shader = try compileShader(fragment_file, .fragment);
         defer gl.deleteShader(fragment_shader);
-        gl.shaderSource(fragment_shader, 1, &.{fragment_src});
-        gl.compileShader(fragment_shader);
-        if (gl.getShader(fragment_shader, .compile_status) == 0) {
-            const log = try gl.getShaderInfoLog(fragment_shader, allocator);
-            defer allocator.free(log);
-            std.debug.print("Error compiling {s}:\n{s}\n", .{ fragment_file, log });
-            return error.ShaderCompilationError;
+
+        var geometry_shader: ?gl.Shader = null;
+        if (geometry_file) |gf| {
+            geometry_shader = try compileShader(gf, .geometry);
         }
+        defer if (geometry_shader) |gs| gl.deleteShader(gs);
 
         const program = gl.createProgram();
         errdefer gl.deleteProgram(program);
         gl.attachShader(program, vertex_shader);
         gl.attachShader(program, fragment_shader);
+        if (geometry_shader) |gs| gl.attachShader(program, gs);
         gl.linkProgram(program);
 
         if (gl.getProgram(program, .link_status) == 0) {
             const log = try gl.getProgramInfoLog(program, allocator);
             defer allocator.free(log);
-            std.debug.print("Error linking {s} and {s}:\n{s}\n", .{ vertex_file, fragment_file, log });
+            std.debug.print("Error linking program:\n{s}\n", .{log});
             return error.ShaderCompilationError;
         }
 
         return Shader{ .program = program };
+    }
+
+    fn compileShader(comptime filename: []const u8, shader_type: gl.ShaderType) !gl.Shader {
+        const shader = gl.createShader(shader_type);
+        errdefer gl.deleteShader(shader);
+        gl.shaderSource(shader, 1, &.{@embedFile(filename)});
+        gl.compileShader(shader);
+        if (gl.getShader(shader, .compile_status) == 0) {
+            const log = try gl.getShaderInfoLog(shader, allocator);
+            defer allocator.free(log);
+            std.debug.print("Error compiling {s}:\n{s}\n", .{ filename, log });
+            return error.ShaderCompilationError;
+        }
+        return shader;
     }
 
     pub fn deinit(shader: Shader) void {
