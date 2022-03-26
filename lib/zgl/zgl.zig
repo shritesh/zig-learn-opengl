@@ -340,6 +340,10 @@ pub fn bindBuffer(target: BufferTarget, buf: Buffer) void {
     checkError();
 }
 
+pub fn bindBufferRange(target: BufferTarget, index: u32, buf: Buffer, offset: usize, size: usize) void {
+    c.glBindBufferRange(@enumToInt(target), index, @enumToInt(buf), ui2gl(offset), cs2gl(size));
+    checkError();
+}
 pub fn deleteBuffers(items: []const Buffer) void {
     c.glDeleteBuffers(cs2gl(items.len), @ptrCast([*]const UInt, items.ptr));
 }
@@ -662,6 +666,14 @@ pub fn getProgramInfoLog(program: Program, allocator: std.mem.Allocator) ![:0]co
     return log;
 }
 
+pub fn getAttribLocation(program: Program, name: [:0]const u8) ?u32 {
+    const loc = c.glGetAttribLocation(@enumToInt(program), name.ptr);
+    checkError();
+    if (loc < 0)
+        return null;
+    return @intCast(u32, loc);
+}
+
 pub fn getUniformLocation(program: Program, name: [:0]const u8) ?u32 {
     const loc = c.glGetUniformLocation(@enumToInt(program), name.ptr);
     checkError();
@@ -670,12 +682,17 @@ pub fn getUniformLocation(program: Program, name: [:0]const u8) ?u32 {
     return @intCast(u32, loc);
 }
 
-pub fn getAttribLocation(program: Program, name: [:0]const u8) ?u32 {
-    const loc = c.glGetAttribLocation(@enumToInt(program), name.ptr);
+pub fn getUniformBlockIndex(program: Program, name: [:0]const u8) ?u32 {
+    const idx = c.glGetUniformBlockIndex(@enumToInt(program), name.ptr);
     checkError();
-    if (loc < 0)
+    if (idx == c.GL_INVALID_INDEX)
         return null;
-    return @intCast(u32, loc);
+    return idx;
+}
+
+pub fn uniformBlockBinding(program: Program, block_index: u32, block_binding: u32) void {
+    c.glUniformBlockBinding(@enumToInt(program), block_index, block_binding);
+    checkError();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

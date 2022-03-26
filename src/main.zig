@@ -46,108 +46,59 @@ pub fn main() !void {
 
     gl.enable(.depth_test);
 
-    const shader = try Shader.init("shader.vert", "shader.frag");
-    defer shader.deinit();
-
-    const skybox_shader = try Shader.init("skybox.vert", "skybox.frag");
-    defer skybox_shader.deinit();
-
-    const skybox_texture = try loadCubemap(.{
-        "assets/skybox/right.jpg",
-        "assets/skybox/left.jpg",
-        "assets/skybox/top.jpg",
-        "assets/skybox/bottom.jpg",
-        "assets/skybox/front.jpg",
-        "assets/skybox/back.jpg",
-    });
-    defer gl.deleteTexture(skybox_texture);
+    const shaders = [_]Shader{
+        try Shader.init("shader.vert", "red.frag"),
+        try Shader.init("shader.vert", "green.frag"),
+        try Shader.init("shader.vert", "blue.frag"),
+        try Shader.init("shader.vert", "yellow.frag"),
+    };
+    defer {
+        for (shaders) |shader|
+            shader.deinit();
+    }
 
     const cube_vertices = [_]f32{
-        -0.5, -0.5, -0.5, 0.0,  0.0,  -1.0,
-        0.5,  -0.5, -0.5, 0.0,  0.0,  -1.0,
-        0.5,  0.5,  -0.5, 0.0,  0.0,  -1.0,
-        0.5,  0.5,  -0.5, 0.0,  0.0,  -1.0,
-        -0.5, 0.5,  -0.5, 0.0,  0.0,  -1.0,
-        -0.5, -0.5, -0.5, 0.0,  0.0,  -1.0,
+        -0.5, -0.5, -0.5,
+        0.5,  -0.5, -0.5,
+        0.5,  0.5,  -0.5,
+        0.5,  0.5,  -0.5,
+        -0.5, 0.5,  -0.5,
+        -0.5, -0.5, -0.5,
 
-        -0.5, -0.5, 0.5,  0.0,  0.0,  1.0,
-        0.5,  -0.5, 0.5,  0.0,  0.0,  1.0,
-        0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
-        0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
-        -0.5, 0.5,  0.5,  0.0,  0.0,  1.0,
-        -0.5, -0.5, 0.5,  0.0,  0.0,  1.0,
+        -0.5, -0.5, 0.5,
+        0.5,  -0.5, 0.5,
+        0.5,  0.5,  0.5,
+        0.5,  0.5,  0.5,
+        -0.5, 0.5,  0.5,
+        -0.5, -0.5, 0.5,
 
-        -0.5, 0.5,  0.5,  -1.0, 0.0,  0.0,
-        -0.5, 0.5,  -0.5, -1.0, 0.0,  0.0,
-        -0.5, -0.5, -0.5, -1.0, 0.0,  0.0,
-        -0.5, -0.5, -0.5, -1.0, 0.0,  0.0,
-        -0.5, -0.5, 0.5,  -1.0, 0.0,  0.0,
-        -0.5, 0.5,  0.5,  -1.0, 0.0,  0.0,
+        -0.5, 0.5,  0.5,
+        -0.5, 0.5,  -0.5,
+        -0.5, -0.5, -0.5,
+        -0.5, -0.5, -0.5,
+        -0.5, -0.5, 0.5,
+        -0.5, 0.5,  0.5,
 
-        0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
-        0.5,  0.5,  -0.5, 1.0,  0.0,  0.0,
-        0.5,  -0.5, -0.5, 1.0,  0.0,  0.0,
-        0.5,  -0.5, -0.5, 1.0,  0.0,  0.0,
-        0.5,  -0.5, 0.5,  1.0,  0.0,  0.0,
-        0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+        0.5,  0.5,  0.5,
+        0.5,  0.5,  -0.5,
+        0.5,  -0.5, -0.5,
+        0.5,  -0.5, -0.5,
+        0.5,  -0.5, 0.5,
+        0.5,  0.5,  0.5,
 
-        -0.5, -0.5, -0.5, 0.0,  -1.0, 0.0,
-        0.5,  -0.5, -0.5, 0.0,  -1.0, 0.0,
-        0.5,  -0.5, 0.5,  0.0,  -1.0, 0.0,
-        0.5,  -0.5, 0.5,  0.0,  -1.0, 0.0,
-        -0.5, -0.5, 0.5,  0.0,  -1.0, 0.0,
-        -0.5, -0.5, -0.5, 0.0,  -1.0, 0.0,
+        -0.5, -0.5, -0.5,
+        0.5,  -0.5, -0.5,
+        0.5,  -0.5, 0.5,
+        0.5,  -0.5, 0.5,
+        -0.5, -0.5, 0.5,
+        -0.5, -0.5, -0.5,
 
-        -0.5, 0.5,  -0.5, 0.0,  1.0,  0.0,
-        0.5,  0.5,  -0.5, 0.0,  1.0,  0.0,
-        0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
-        0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
-        -0.5, 0.5,  0.5,  0.0,  1.0,  0.0,
-        -0.5, 0.5,  -0.5, 0.0,  1.0,  0.0,
-    };
-
-    const skybox_vertices = [_]f32{
-        -1.0, 1.0,  -1.0,
-        -1.0, -1.0, -1.0,
-        1.0,  -1.0, -1.0,
-        1.0,  -1.0, -1.0,
-        1.0,  1.0,  -1.0,
-        -1.0, 1.0,  -1.0,
-
-        -1.0, -1.0, 1.0,
-        -1.0, -1.0, -1.0,
-        -1.0, 1.0,  -1.0,
-        -1.0, 1.0,  -1.0,
-        -1.0, 1.0,  1.0,
-        -1.0, -1.0, 1.0,
-
-        1.0,  -1.0, -1.0,
-        1.0,  -1.0, 1.0,
-        1.0,  1.0,  1.0,
-        1.0,  1.0,  1.0,
-        1.0,  1.0,  -1.0,
-        1.0,  -1.0, -1.0,
-
-        -1.0, -1.0, 1.0,
-        -1.0, 1.0,  1.0,
-        1.0,  1.0,  1.0,
-        1.0,  1.0,  1.0,
-        1.0,  -1.0, 1.0,
-        -1.0, -1.0, 1.0,
-
-        -1.0, 1.0,  -1.0,
-        1.0,  1.0,  -1.0,
-        1.0,  1.0,  1.0,
-        1.0,  1.0,  1.0,
-        -1.0, 1.0,  1.0,
-        -1.0, 1.0,  -1.0,
-
-        -1.0, -1.0, -1.0,
-        -1.0, -1.0, 1.0,
-        1.0,  -1.0, -1.0,
-        1.0,  -1.0, -1.0,
-        -1.0, -1.0, 1.0,
-        1.0,  -1.0, 1.0,
+        -0.5, 0.5,  -0.5,
+        0.5,  0.5,  -0.5,
+        0.5,  0.5,  0.5,
+        0.5,  0.5,  0.5,
+        -0.5, 0.5,  0.5,
+        -0.5, 0.5,  -0.5,
     };
 
     const cube_vao = gl.genVertexArray();
@@ -161,31 +112,26 @@ pub fn main() !void {
     gl.bufferData(.array_buffer, f32, &cube_vertices, .static_draw);
 
     gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 3, .float, false, 6 * @sizeOf(f32), 0);
-
-    gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 3, .float, false, 6 * @sizeOf(f32), 3 * @sizeOf(f32));
-
-    const skybox_vao = gl.genVertexArray();
-    defer gl.deleteVertexArray(skybox_vao);
-    gl.bindVertexArray(skybox_vao);
-
-    const skybox_vbo = gl.genBuffer();
-    defer gl.deleteBuffer(skybox_vbo);
-
-    gl.bindBuffer(.array_buffer, skybox_vbo);
-    gl.bufferData(.array_buffer, f32, &skybox_vertices, .static_draw);
-
-    gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
 
-    shader.use();
-    shader.seti32("skybox", 0);
+    for (shaders) |shader| {
+        const uniform_block_idx = gl.getUniformBlockIndex(shader.program, "Matrices").?;
+        gl.uniformBlockBinding(shader.program, uniform_block_idx, 0);
+    }
 
-    skybox_shader.use();
-    skybox_shader.seti32("skybox", 0);
+    const ubo = gl.genBuffer();
+    defer gl.deleteBuffer(ubo);
 
-    gl.activeTexture(.texture0);
+    gl.bindBuffer(.uniform_buffer, ubo);
+    gl.bufferUninitialized(.uniform_buffer, [16]f32, 2, .static_draw);
+    gl.bindBuffer(.uniform_buffer, .none);
+
+    gl.bindBufferRange(.uniform_buffer, 0, ubo, 0, 2 * @sizeOf([16]f32));
+
+    const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
+    gl.bindBuffer(.uniform_buffer, ubo);
+    gl.bufferSubData(.uniform_buffer, 0, [16]f32, &.{math.matToArray(projection)});
+    gl.bindBuffer(.uniform_buffer, .none);
 
     while (!window.shouldClose()) {
         const current_frame = @floatCast(f32, glfw.getTime());
@@ -197,41 +143,21 @@ pub fn main() !void {
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
         gl.clear(.{ .color = true, .depth = true });
 
-        const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
-        const model = math.identity();
         var view = camera.viewMatrix();
-
-        // Draw cube
-        shader.use();
-        shader.setMat("projection", projection);
-        shader.setMat("view", view);
-        shader.setMat("model", model);
-        shader.setVec3("cameraPos", camera.position);
+        gl.bindBuffer(.uniform_buffer, ubo);
+        gl.bufferSubData(.uniform_buffer, @sizeOf([16]f32), [16]f32, &.{math.matToArray(view)});
+        gl.bindBuffer(.uniform_buffer, .none);
 
         gl.bindVertexArray(cube_vao);
-        gl.bindTexture(.cube_map, skybox_texture);
-        gl.drawArrays(.triangles, 0, 36);
 
-        // Draw skybox
-        gl.depthFunc(.less_or_equal);
-        skybox_shader.use();
+        inline for ([_][2]f32{ .{ -0.75, 0.75 }, .{ 0.75, 0.75 }, .{ -0.75, -0.75 }, .{ 0.75, -0.75 } }) |coords, i| {
+            shaders[i].use();
 
-        // FIXME: view = mat4(mat3(view));
-        view[0][3] = 0.0;
-        view[1][3] = 0.0;
-        view[2][3] = 0.0;
-        view[3][0] = 0.0;
-        view[3][1] = 0.0;
-        view[3][2] = 0.0;
-        view[3][3] = 1.0;
+            const model = math.translation(coords[0], coords[1], 0.0);
+            shaders[i].setMat("model", model);
 
-        skybox_shader.setMat("projection", projection);
-        skybox_shader.setMat("view", view);
-
-        gl.bindVertexArray(skybox_vao);
-        gl.bindTexture(.cube_map, skybox_texture);
-        gl.drawArrays(.triangles, 0, 36);
-        gl.depthFunc(.less);
+            gl.drawArrays(.triangles, 0, 36);
+        }
 
         try window.swapBuffers();
         try glfw.pollEvents();
