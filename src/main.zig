@@ -49,8 +49,21 @@ pub fn main() !void {
     const shader = try Shader.init("shader.vert", "shader.frag");
     defer shader.deinit();
 
-    const screen_shader = try Shader.init("framebuffer.vert", "framebuffer.frag");
-    defer screen_shader.deinit();
+    const skybox_shader = try Shader.init("skybox.vert", "skybox.frag");
+    defer skybox_shader.deinit();
+
+    const cube_texture = try loadTexture("assets/container.jpg");
+    defer gl.deleteTexture(cube_texture);
+
+    const skybox_texture = try loadCubemap(.{
+        "assets/skybox/right.jpg",
+        "assets/skybox/left.jpg",
+        "assets/skybox/top.jpg",
+        "assets/skybox/bottom.jpg",
+        "assets/skybox/front.jpg",
+        "assets/skybox/back.jpg",
+    });
+    defer gl.deleteTexture(skybox_texture);
 
     const cube_vertices = [_]f32{
         -0.5, -0.5, -0.5, 0.0, 0.0,
@@ -96,24 +109,48 @@ pub fn main() !void {
         -0.5, 0.5,  -0.5, 0.0, 1.0,
     };
 
-    const plane_vertices = [_]f32{
-        5.0,  -0.5, 5.0,  2.0, 0.0,
-        -5.0, -0.5, 5.0,  0.0, 0.0,
-        -5.0, -0.5, -5.0, 0.0, 2.0,
+    const skybox_vertices = [_]f32{
+        -1.0, 1.0,  -1.0,
+        -1.0, -1.0, -1.0,
+        1.0,  -1.0, -1.0,
+        1.0,  -1.0, -1.0,
+        1.0,  1.0,  -1.0,
+        -1.0, 1.0,  -1.0,
 
-        5.0,  -0.5, 5.0,  2.0, 0.0,
-        -5.0, -0.5, -5.0, 0.0, 2.0,
-        5.0,  -0.5, -5.0, 2.0, 2.0,
-    };
+        -1.0, -1.0, 1.0,
+        -1.0, -1.0, -1.0,
+        -1.0, 1.0,  -1.0,
+        -1.0, 1.0,  -1.0,
+        -1.0, 1.0,  1.0,
+        -1.0, -1.0, 1.0,
 
-    const quad_vertices = [_]f32{
-        -1.0, 1.0,  0.0, 1.0,
-        -1.0, -1.0, 0.0, 0.0,
-        1.0,  -1.0, 1.0, 0.0,
+        1.0,  -1.0, -1.0,
+        1.0,  -1.0, 1.0,
+        1.0,  1.0,  1.0,
+        1.0,  1.0,  1.0,
+        1.0,  1.0,  -1.0,
+        1.0,  -1.0, -1.0,
 
-        -1.0, 1.0,  0.0, 1.0,
-        1.0,  -1.0, 1.0, 0.0,
-        1.0,  1.0,  1.0, 1.0,
+        -1.0, -1.0, 1.0,
+        -1.0, 1.0,  1.0,
+        1.0,  1.0,  1.0,
+        1.0,  1.0,  1.0,
+        1.0,  -1.0, 1.0,
+        -1.0, -1.0, 1.0,
+
+        -1.0, 1.0,  -1.0,
+        1.0,  1.0,  -1.0,
+        1.0,  1.0,  1.0,
+        1.0,  1.0,  1.0,
+        -1.0, 1.0,  1.0,
+        -1.0, 1.0,  -1.0,
+
+        -1.0, -1.0, -1.0,
+        -1.0, -1.0, 1.0,
+        1.0,  -1.0, -1.0,
+        1.0,  -1.0, -1.0,
+        -1.0, -1.0, 1.0,
+        1.0,  -1.0, 1.0,
     };
 
     const cube_vao = gl.genVertexArray();
@@ -132,72 +169,26 @@ pub fn main() !void {
     gl.enableVertexAttribArray(1);
     gl.vertexAttribPointer(1, 2, .float, false, 5 * @sizeOf(f32), 3 * @sizeOf(f32));
 
-    const plane_vao = gl.genVertexArray();
-    defer gl.deleteVertexArray(plane_vao);
-    gl.bindVertexArray(plane_vao);
+    const skybox_vao = gl.genVertexArray();
+    defer gl.deleteVertexArray(skybox_vao);
+    gl.bindVertexArray(skybox_vao);
 
-    const plane_vbo = gl.genBuffer();
-    defer gl.deleteBuffer(plane_vbo);
+    const skybox_vbo = gl.genBuffer();
+    defer gl.deleteBuffer(skybox_vbo);
 
-    gl.bindBuffer(.array_buffer, plane_vbo);
-    gl.bufferData(.array_buffer, f32, &plane_vertices, .static_draw);
-
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 3, .float, false, 5 * @sizeOf(f32), 0);
-
-    gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 2, .float, false, 5 * @sizeOf(f32), 3 * @sizeOf(f32));
-
-    const quad_vao = gl.genVertexArray();
-    defer gl.deleteVertexArray(quad_vao);
-    gl.bindVertexArray(quad_vao);
-
-    const quad_vbo = gl.genBuffer();
-    defer gl.deleteBuffer(quad_vbo);
-
-    gl.bindBuffer(.array_buffer, quad_vbo);
-    gl.bufferData(.array_buffer, f32, &quad_vertices, .static_draw);
+    gl.bindBuffer(.array_buffer, skybox_vbo);
+    gl.bufferData(.array_buffer, f32, &skybox_vertices, .static_draw);
 
     gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 2, .float, false, 4 * @sizeOf(f32), 0);
-
-    gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 2, .float, false, 4 * @sizeOf(f32), 2 * @sizeOf(f32));
-
-    const cube_texture = try textureFromFile("assets/container.jpg");
-    defer gl.deleteTexture(cube_texture);
-
-    const floor_texture = try textureFromFile("assets/metal.png");
-    defer gl.deleteTexture(floor_texture);
+    gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
 
     shader.use();
     shader.seti32("texture1", 0);
 
-    screen_shader.use();
-    screen_shader.seti32("screenTexture", 0);
+    skybox_shader.use();
+    skybox_shader.seti32("skybox", 0);
 
-    const framebuffer = gl.genFramebuffer();
-    defer gl.deleteFramebuffer(framebuffer);
-    gl.bindFramebuffer(.framebuffer, framebuffer);
-
-    const texture = gl.genTexture();
-    gl.bindTexture(.@"2d", texture);
-    gl.texImage2D(.@"2d", 0, .rgb, 800, 600, .rgb, .unsigned_byte, null);
-    gl.texParameter(.@"2d", .wrap_s, .clamp_to_edge);
-    gl.texParameter(.@"2d", .wrap_t, .clamp_to_edge);
-    gl.texParameter(.@"2d", .min_filter, .linear);
-    gl.texParameter(.@"2d", .mag_filter, .linear);
-    gl.framebufferTexture2D(.framebuffer, .color0, .@"2d", texture, 0);
-
-    const rbo = gl.genRenderbuffer();
-    defer gl.deleteRenderbuffer(rbo);
-
-    gl.bindRenderbuffer(.renderbuffer, rbo);
-    gl.renderbufferStorage(.renderbuffer, .depth24_stencil8, 800, 600);
-    gl.framebufferRenderbuffer(.framebuffer, .depth_stencil, .renderbuffer, rbo);
-
-    if (gl.checkFramebufferStatus(.framebuffer) != .complete) return error.FramebufferInitError;
-    gl.bindFramebuffer(.framebuffer, .none);
+    gl.activeTexture(.texture0);
 
     while (!window.shouldClose()) {
         const current_frame = @floatCast(f32, glfw.getTime());
@@ -206,55 +197,43 @@ pub fn main() !void {
 
         processInput(window);
 
-        // Draw in framebuffer
-        gl.bindFramebuffer(.framebuffer, framebuffer);
-        gl.enable(.depth_test);
-
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
         gl.clear(.{ .color = true, .depth = true });
 
-        shader.use();
-
         const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 100.0);
-        const view = camera.viewMatrix();
-        var model = math.identity();
+        const model = math.identity();
+        var view = camera.viewMatrix();
 
+        // Draw cube
+        shader.use();
         shader.setMat("projection", projection);
         shader.setMat("view", view);
+        shader.setMat("model", model);
 
-        // Cubes
         gl.bindVertexArray(cube_vao);
-        gl.activeTexture(.texture0);
         gl.bindTexture(.@"2d", cube_texture);
-
-        model = math.translation(-1.0, 0.0, -1.0);
-        shader.setMat("model", model);
         gl.drawArrays(.triangles, 0, 36);
 
-        model = math.translation(2.0, 0.0, 0.0);
-        shader.setMat("model", model);
+        // Draw skybox
+        gl.depthFunc(.less_or_equal);
+        skybox_shader.use();
+
+        // FIXME: view = mat4(mat3(view));
+        view[0][3] = 0.0;
+        view[1][3] = 0.0;
+        view[2][3] = 0.0;
+        view[3][0] = 0.0;
+        view[3][1] = 0.0;
+        view[3][2] = 0.0;
+        view[3][3] = 1.0;
+
+        skybox_shader.setMat("projection", projection);
+        skybox_shader.setMat("view", view);
+
+        gl.bindVertexArray(skybox_vao);
+        gl.bindTexture(.cube_map, skybox_texture);
         gl.drawArrays(.triangles, 0, 36);
-
-        // Floor
-        gl.bindVertexArray(plane_vao);
-        gl.bindTexture(.@"2d", floor_texture);
-        model = math.identity();
-        shader.setMat("model", model);
-        gl.drawArrays(.triangles, 0, 6);
-
-        gl.bindVertexArray(.none);
-
-        // Draw in screen
-        gl.bindFramebuffer(.framebuffer, .none);
-        gl.disable(.depth_test);
-
-        gl.clearColor(1.0, 1.0, 1.0, 1.0);
-        gl.clear(.{ .color = true });
-
-        screen_shader.use();
-        gl.bindVertexArray(quad_vao);
-        gl.bindTexture(.@"2d", texture);
-        gl.drawArrays(.triangles, 0, 6);
+        gl.depthFunc(.less);
 
         try window.swapBuffers();
         try glfw.pollEvents();
@@ -301,7 +280,7 @@ fn scrollCallback(_: glfw.Window, _: f64, yoffset: f64) void {
     camera.processMouseScroll(@floatCast(f32, yoffset));
 }
 
-fn textureFromFile(file: [:0]const u8) !gl.Texture {
+fn loadTexture(file: [:0]const u8) !gl.Texture {
     const image = try Image.load(file, .{ .flip = true });
     defer image.unload();
 
@@ -322,6 +301,28 @@ fn textureFromFile(file: [:0]const u8) !gl.Texture {
     gl.texParameter(.@"2d", .wrap_t, .repeat);
     gl.texParameter(.@"2d", .min_filter, .linear_mipmap_linear);
     gl.texParameter(.@"2d", .mag_filter, .linear);
+
+    return texture;
+}
+
+fn loadCubemap(faces: [6][:0]const u8) !gl.Texture {
+    const texture = gl.genTexture();
+    errdefer gl.deleteTexture(texture);
+
+    gl.bindTexture(.cube_map, texture);
+
+    for (faces) |face, i| {
+        const image = try Image.load(face, .{});
+        defer image.unload();
+
+        gl.texImage2D(@intToEnum(gl.TextureTarget, @enumToInt(gl.TextureTarget.cube_map_positive_x) + i), 0, .rgb, image.width, image.height, .rgb, .unsigned_byte, image.data);
+    }
+
+    gl.texParameter(.cube_map, .min_filter, .linear);
+    gl.texParameter(.cube_map, .mag_filter, .linear);
+    gl.texParameter(.cube_map, .wrap_s, .clamp_to_edge);
+    gl.texParameter(.cube_map, .wrap_t, .clamp_to_edge);
+    gl.texParameter(.cube_map, .wrap_r, .clamp_to_edge);
 
     return texture;
 }
