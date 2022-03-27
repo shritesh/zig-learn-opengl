@@ -66,6 +66,7 @@ pub fn main() !void {
     gl.bufferUninitialized(.array_buffer, [16]f32, count, .static_draw);
 
     const rng = std.rand.DefaultPrng.init(@bitCast(u64, glfw.getTime())).random();
+
     const radius = 150.0;
     const offset = 25.0;
     var i: u32 = 0;
@@ -91,21 +92,12 @@ pub fn main() !void {
         gl.bindVertexArray(vao);
         defer gl.bindVertexArray(.none);
 
-        const vec4_size = @sizeOf([4]f32);
-
-        gl.enableVertexAttribArray(3);
-        gl.vertexAttribPointer(3, 4, .float, false, 4 * vec4_size, 0);
-        gl.enableVertexAttribArray(4);
-        gl.vertexAttribPointer(4, 4, .float, false, 4 * vec4_size, 1 * vec4_size);
-        gl.enableVertexAttribArray(5);
-        gl.vertexAttribPointer(5, 4, .float, false, 4 * vec4_size, 2 * vec4_size);
-        gl.enableVertexAttribArray(6);
-        gl.vertexAttribPointer(6, 4, .float, false, 4 * vec4_size, 3 * vec4_size);
-
-        gl.vertexAttribDivisor(3, 1);
-        gl.vertexAttribDivisor(4, 1);
-        gl.vertexAttribDivisor(5, 1);
-        gl.vertexAttribDivisor(6, 1);
+        i = 0;
+        while (i < 4) : (i += 1) {
+            gl.enableVertexAttribArray(3 + i);
+            gl.vertexAttribPointer(3 + i, 4, .float, false, @sizeOf([16]f32), i * @sizeOf([4]f32));
+            gl.vertexAttribDivisor(3 + i, 1);
+        }
     }
 
     while (!window.shouldClose()) {
