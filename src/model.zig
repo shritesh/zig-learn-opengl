@@ -87,11 +87,11 @@ const Mesh = struct {
             const name = switch (texture.type) {
                 .diffuse => blk: {
                     defer diffuse += 1;
-                    break :blk std.fmt.bufPrintZ(&buffer, "material.texture_diffuse{}", .{diffuse}) catch unreachable;
+                    break :blk std.fmt.bufPrintZ(&buffer, "texture_diffuse{}", .{diffuse}) catch unreachable;
                 },
                 .specular => blk: {
                     defer specular += 1;
-                    break :blk std.fmt.bufPrintZ(&buffer, "material.texture_specular{}", .{specular}) catch unreachable;
+                    break :blk std.fmt.bufPrintZ(&buffer, "texture_specular{}", .{specular}) catch unreachable;
                 },
             };
 

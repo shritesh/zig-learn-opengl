@@ -9,10 +9,11 @@ const Camera = @import("./camera.zig").Camera;
 const Model = @import("./model.zig").Model;
 const Shader = @import("./shader.zig").Shader;
 
+const allocator = std.heap.c_allocator;
 const wireframe_mode = false;
 
 var camera = Camera.init(
-    math.f32x4(0.0, 0.0, 3.0, 1.0),
+    math.f32x4(0.0, 0.0, 55.0, 1.0),
     math.f32x4(0.0, 1.0, 0.0, 1.0),
 );
 
@@ -48,58 +49,34 @@ pub fn main() !void {
     const shader = try Shader.init("shader.vert", "shader.frag", null);
     defer shader.deinit();
 
-    const quad_vertices = [_]f32{
-        -0.05, 0.05,  1.0, 0.0, 0.0,
-        0.05,  -0.05, 0.0, 1.0, 0.0,
-        -0.05, -0.05, 0.0, 0.0, 1.0,
+    const rock = try Model.init(allocator, "assets/rock/rock.obj");
+    defer rock.deinit();
 
-        -0.05, 0.05,  1.0, 0.0, 0.0,
-        0.05,  -0.05, 0.0, 1.0, 0.0,
-        0.05,  0.05,  0.0, 1.0, 1.0,
-    };
+    const planet = try Model.init(allocator, "assets/planet/planet.obj");
+    defer planet.deinit();
 
-    var translations: [2 * 100]f32 = undefined;
-    {
-        var idx: usize = 0;
-        var y: i16 = -10;
-        while (y < 10) : (y += 2) {
-            var x: i16 = -10;
-            while (x < 10) : (x += 2) {
-                translations[idx * 2] = @intToFloat(f32, x) / 10.0 + 0.1;
-                translations[idx * 2 + 1] = @intToFloat(f32, y) / 10.0 + 0.1;
+    const matrices = try allocator.alloc(math.Mat, 2000);
+    defer allocator.free(matrices);
 
-                idx += 1;
-            }
-        }
+    const rng = std.rand.DefaultPrng.init(@bitCast(u64, glfw.getTime())).random();
+    const radius = 50.0;
+    const offset = 2.5;
+    for (matrices) |*matrix, i| {
+        const angle = @intToFloat(f32, i) / @intToFloat(f32, matrices.len) * 360.0;
+        var model = math.translation(
+            math.sin(angle) * radius + rng.float(f32) * 2.0 * offset - offset,
+            0.04 * (rng.float(f32) * 2.0 * offset - offset),
+            math.cos(angle) * radius + rng.float(f32) * 2.0 * offset - offset,
+        );
+
+        const scale = rng.float(f32) * 0.2 + 0.05;
+        model = math.mul(math.scaling(scale, scale, scale), model);
+
+        const rotation = rng.float(f32) * 360.0;
+        model = math.mul(math.matFromAxisAngle(.{ 0.4, 0.6, 0.8, 1.0 }, rotation), model);
+
+        matrix.* = model;
     }
-
-    const vao = gl.genVertexArray();
-    defer gl.deleteVertexArray(vao);
-    gl.bindVertexArray(vao);
-
-    const vbo = gl.genBuffer();
-    defer gl.deleteBuffer(vbo);
-
-    gl.bindBuffer(.array_buffer, vbo);
-    gl.bufferData(.array_buffer, f32, &quad_vertices, .static_draw);
-
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 2, .float, false, 5 * @sizeOf(f32), 0);
-
-    gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 3, .float, false, 5 * @sizeOf(f32), 2 * @sizeOf(f32));
-
-    const ibo = gl.genBuffer();
-    defer gl.deleteBuffer(ibo);
-
-    gl.bindBuffer(.array_buffer, ibo);
-    gl.bufferData(.array_buffer, f32, &translations, .static_draw);
-
-    gl.enableVertexAttribArray(2);
-    gl.vertexAttribPointer(2, 2, .float, false, 2 * @sizeOf(f32), 0);
-    gl.vertexAttribDivisor(2, 1); // Each instance, not each vertex
-
-    shader.use();
 
     while (!window.shouldClose()) {
         const current_frame = @floatCast(f32, glfw.getTime());
@@ -113,7 +90,20 @@ pub fn main() !void {
 
         shader.use();
 
-        gl.drawArraysInstanced(.triangles, 0, 6, 100);
+        const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 1000.0);
+        const view = camera.viewMatrix();
+        shader.setMat("projection", projection);
+        shader.setMat("view", view);
+
+        var model = math.translation(0.0, -3.0, 0.0);
+        model = math.mul(math.scaling(4.0, 4.0, 4.0), model);
+        shader.setMat("model", model);
+        planet.draw(shader);
+
+        for (matrices) |matrix| {
+            shader.setMat("model", matrix);
+            rock.draw(shader);
+        }
 
         try window.swapBuffers();
         try glfw.pollEvents();
