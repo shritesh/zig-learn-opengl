@@ -13,7 +13,7 @@ const allocator = std.heap.c_allocator;
 const wireframe_mode = false;
 
 var camera = Camera.init(
-    math.f32x4(0.0, 0.0, 55.0, 1.0),
+    math.f32x4(0.0, 0.0, 155.0, 1.0),
     math.f32x4(0.0, 1.0, 0.0, 1.0),
 );
 
@@ -46,23 +46,31 @@ pub fn main() !void {
 
     gl.enable(.depth_test);
 
-    const shader = try Shader.init("shader.vert", "shader.frag", null);
-    defer shader.deinit();
+    const planet_shader = try Shader.init("planet.vert", "shader.frag", null);
+    defer planet_shader.deinit();
 
-    const rock = try Model.init(allocator, "assets/rock/rock.obj");
-    defer rock.deinit();
+    const asteroid_shader = try Shader.init("asteroid.vert", "shader.frag", null);
+    defer asteroid_shader.deinit();
 
     const planet = try Model.init(allocator, "assets/planet/planet.obj");
     defer planet.deinit();
 
-    const matrices = try allocator.alloc(math.Mat, 2000);
-    defer allocator.free(matrices);
+    const rock = try Model.init(allocator, "assets/rock/rock.obj");
+    defer rock.deinit();
+
+    const count = 100_000;
+
+    const buffer = gl.genBuffer();
+    defer gl.deleteBuffer(buffer);
+    gl.bindBuffer(.array_buffer, buffer);
+    gl.bufferUninitialized(.array_buffer, [16]f32, count, .static_draw);
 
     const rng = std.rand.DefaultPrng.init(@bitCast(u64, glfw.getTime())).random();
-    const radius = 50.0;
-    const offset = 2.5;
-    for (matrices) |*matrix, i| {
-        const angle = @intToFloat(f32, i) / @intToFloat(f32, matrices.len) * 360.0;
+    const radius = 150.0;
+    const offset = 25.0;
+    var i: u32 = 0;
+    while (i < count) : (i += 1) {
+        const angle = @intToFloat(f32, i) / @intToFloat(f32, count) * 360.0;
         var model = math.translation(
             math.sin(angle) * radius + rng.float(f32) * 2.0 * offset - offset,
             0.04 * (rng.float(f32) * 2.0 * offset - offset),
@@ -75,7 +83,29 @@ pub fn main() !void {
         const rotation = rng.float(f32) * 360.0;
         model = math.mul(math.matFromAxisAngle(.{ 0.4, 0.6, 0.8, 1.0 }, rotation), model);
 
-        matrix.* = model;
+        gl.bufferSubData(.array_buffer, @sizeOf([16]f32) * i, [16]f32, &.{math.matToArray(model)});
+    }
+
+    for (rock.meshes.items) |mesh| {
+        const vao = mesh.vao;
+        gl.bindVertexArray(vao);
+        defer gl.bindVertexArray(.none);
+
+        const vec4_size = @sizeOf([4]f32);
+
+        gl.enableVertexAttribArray(3);
+        gl.vertexAttribPointer(3, 4, .float, false, 4 * vec4_size, 0);
+        gl.enableVertexAttribArray(4);
+        gl.vertexAttribPointer(4, 4, .float, false, 4 * vec4_size, 1 * vec4_size);
+        gl.enableVertexAttribArray(5);
+        gl.vertexAttribPointer(5, 4, .float, false, 4 * vec4_size, 2 * vec4_size);
+        gl.enableVertexAttribArray(6);
+        gl.vertexAttribPointer(6, 4, .float, false, 4 * vec4_size, 3 * vec4_size);
+
+        gl.vertexAttribDivisor(3, 1);
+        gl.vertexAttribDivisor(4, 1);
+        gl.vertexAttribDivisor(5, 1);
+        gl.vertexAttribDivisor(6, 1);
     }
 
     while (!window.shouldClose()) {
@@ -88,21 +118,27 @@ pub fn main() !void {
         gl.clearColor(0.05, 0.05, 0.05, 1.0);
         gl.clear(.{ .color = true, .depth = true });
 
-        shader.use();
-
         const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 1000.0);
         const view = camera.viewMatrix();
-        shader.setMat("projection", projection);
-        shader.setMat("view", view);
+        asteroid_shader.use();
+        asteroid_shader.setMat("projection", projection);
+        asteroid_shader.setMat("view", view);
+
+        planet_shader.use();
+        planet_shader.setMat("projection", projection);
+        planet_shader.setMat("view", view);
 
         var model = math.translation(0.0, -3.0, 0.0);
         model = math.mul(math.scaling(4.0, 4.0, 4.0), model);
-        shader.setMat("model", model);
-        planet.draw(shader);
+        planet_shader.setMat("model", model);
+        planet.draw(planet_shader);
 
-        for (matrices) |matrix| {
-            shader.setMat("model", matrix);
-            rock.draw(shader);
+        asteroid_shader.use();
+        asteroid_shader.seti32("texture_diffuse1", 0);
+        gl.bindTexture(.@"2d", rock.loaded_textures.items[0].texture);
+        for (rock.meshes.items) |mesh| {
+            gl.bindVertexArray(mesh.vao);
+            gl.drawElementsInstanced(.triangles, mesh.indices.len, .u32, 0, count);
         }
 
         try window.swapBuffers();

@@ -18,7 +18,7 @@ const Vertex = struct {
     tex_coords: [2]f32,
 };
 
-const TextureType = enum { diffuse, specular };
+const TextureType = enum { diffuse, specular, height, normal };
 
 const Texture = struct {
     texture: gl.Texture,
@@ -92,6 +92,14 @@ const Mesh = struct {
                 .specular => blk: {
                     defer specular += 1;
                     break :blk std.fmt.bufPrintZ(&buffer, "texture_specular{}", .{specular}) catch unreachable;
+                },
+                .height => blk: {
+                    defer diffuse += 1;
+                    break :blk std.fmt.bufPrintZ(&buffer, "texture_height{}", .{diffuse}) catch unreachable;
+                },
+                .normal => blk: {
+                    defer specular += 1;
+                    break :blk std.fmt.bufPrintZ(&buffer, "texture_normal{}", .{specular}) catch unreachable;
                 },
             };
 
@@ -203,10 +211,12 @@ pub const Model = struct {
                 try indices.append(face.mIndices[j]);
             }
         }
-        if (mesh.mMaterialIndex > 0) {
+        if (mesh.mMaterialIndex >= 0) {
             const material = scene.mMaterials[mesh.mMaterialIndex];
             try model.loadMaterialTextures(&textures, material, c.aiTextureType_DIFFUSE, .diffuse);
             try model.loadMaterialTextures(&textures, material, c.aiTextureType_SPECULAR, .specular);
+            try model.loadMaterialTextures(&textures, material, c.aiTextureType_HEIGHT, .normal);
+            try model.loadMaterialTextures(&textures, material, c.aiTextureType_AMBIENT, .height);
         }
 
         try model.meshes.append(Mesh.init(vertices.items, indices.items, textures.items));
