@@ -6,14 +6,13 @@ const math = @import("zmath");
 const tau = std.math.tau;
 
 const Camera = @import("./camera.zig").Camera;
-const Model = @import("./model.zig").Model;
 const Shader = @import("./shader.zig").Shader;
 
 const allocator = std.heap.c_allocator;
 const wireframe_mode = false;
 
 var camera = Camera.init(
-    math.f32x4(0.0, 0.0, 155.0, 1.0),
+    math.f32x4(0.0, 0.0, 3.0, 1.0),
     math.f32x4(0.0, 1.0, 0.0, 1.0),
 );
 
@@ -31,6 +30,7 @@ pub fn main() !void {
         .opengl_profile = .opengl_core_profile,
         .opengl_forward_compat = builtin.os.tag == .macos,
         .cocoa_retina_framebuffer = false,
+        .samples = 4,
     });
     defer window.destroy();
 
@@ -45,60 +45,67 @@ pub fn main() !void {
     window.setScrollCallback(scrollCallback);
 
     gl.enable(.depth_test);
+    gl.enable(.multisample);
 
-    const planet_shader = try Shader.init("planet.vert", "shader.frag", null);
-    defer planet_shader.deinit();
+    const shader = try Shader.init("shader.vert", "shader.frag", null);
+    defer shader.deinit();
 
-    const asteroid_shader = try Shader.init("asteroid.vert", "shader.frag", null);
-    defer asteroid_shader.deinit();
+    const cube_vertices = [_]f32{
+        -0.5, -0.5, -0.5,
+        0.5,  -0.5, -0.5,
+        0.5,  0.5,  -0.5,
+        0.5,  0.5,  -0.5,
+        -0.5, 0.5,  -0.5,
+        -0.5, -0.5, -0.5,
 
-    const planet = try Model.init(allocator, "assets/planet/planet.obj");
-    defer planet.deinit();
+        -0.5, -0.5, 0.5,
+        0.5,  -0.5, 0.5,
+        0.5,  0.5,  0.5,
+        0.5,  0.5,  0.5,
+        -0.5, 0.5,  0.5,
+        -0.5, -0.5, 0.5,
 
-    const rock = try Model.init(allocator, "assets/rock/rock.obj");
-    defer rock.deinit();
+        -0.5, 0.5,  0.5,
+        -0.5, 0.5,  -0.5,
+        -0.5, -0.5, -0.5,
+        -0.5, -0.5, -0.5,
+        -0.5, -0.5, 0.5,
+        -0.5, 0.5,  0.5,
 
-    const count = 100_000;
+        0.5,  0.5,  0.5,
+        0.5,  0.5,  -0.5,
+        0.5,  -0.5, -0.5,
+        0.5,  -0.5, -0.5,
+        0.5,  -0.5, 0.5,
+        0.5,  0.5,  0.5,
 
-    const buffer = gl.genBuffer();
-    defer gl.deleteBuffer(buffer);
-    gl.bindBuffer(.array_buffer, buffer);
-    gl.bufferUninitialized(.array_buffer, [16]f32, count, .static_draw);
+        -0.5, -0.5, -0.5,
+        0.5,  -0.5, -0.5,
+        0.5,  -0.5, 0.5,
+        0.5,  -0.5, 0.5,
+        -0.5, -0.5, 0.5,
+        -0.5, -0.5, -0.5,
 
-    const rng = std.rand.DefaultPrng.init(@bitCast(u64, glfw.getTime())).random();
+        -0.5, 0.5,  -0.5,
+        0.5,  0.5,  -0.5,
+        0.5,  0.5,  0.5,
+        0.5,  0.5,  0.5,
+        -0.5, 0.5,  0.5,
+        -0.5, 0.5,  -0.5,
+    };
 
-    const radius = 150.0;
-    const offset = 25.0;
-    var i: u32 = 0;
-    while (i < count) : (i += 1) {
-        const angle = @intToFloat(f32, i) / @intToFloat(f32, count) * 360.0;
-        var model = math.translation(
-            math.sin(angle) * radius + rng.float(f32) * 2.0 * offset - offset,
-            0.04 * (rng.float(f32) * 2.0 * offset - offset),
-            math.cos(angle) * radius + rng.float(f32) * 2.0 * offset - offset,
-        );
+    const cube_vao = gl.genVertexArray();
+    defer gl.deleteVertexArray(cube_vao);
+    gl.bindVertexArray(cube_vao);
 
-        const scale = rng.float(f32) * 0.2 + 0.05;
-        model = math.mul(math.scaling(scale, scale, scale), model);
+    const cube_vbo = gl.genBuffer();
+    defer gl.deleteBuffer(cube_vbo);
 
-        const rotation = rng.float(f32) * 360.0;
-        model = math.mul(math.matFromAxisAngle(.{ 0.4, 0.6, 0.8, 1.0 }, rotation), model);
+    gl.bindBuffer(.array_buffer, cube_vbo);
+    gl.bufferData(.array_buffer, f32, &cube_vertices, .static_draw);
 
-        gl.bufferSubData(.array_buffer, @sizeOf([16]f32) * i, [16]f32, &.{math.matToArray(model)});
-    }
-
-    for (rock.meshes.items) |mesh| {
-        const vao = mesh.vao;
-        gl.bindVertexArray(vao);
-        defer gl.bindVertexArray(.none);
-
-        i = 0;
-        while (i < 4) : (i += 1) {
-            gl.enableVertexAttribArray(3 + i);
-            gl.vertexAttribPointer(3 + i, 4, .float, false, @sizeOf([16]f32), i * @sizeOf([4]f32));
-            gl.vertexAttribDivisor(3 + i, 1);
-        }
-    }
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, .float, false, 3 * @sizeOf(f32), 0);
 
     while (!window.shouldClose()) {
         const current_frame = @floatCast(f32, glfw.getTime());
@@ -112,26 +119,15 @@ pub fn main() !void {
 
         const projection = math.perspectiveFovRh(camera.zoom * tau / 360.0, 800.0 / 600.0, 0.1, 1000.0);
         const view = camera.viewMatrix();
-        asteroid_shader.use();
-        asteroid_shader.setMat("projection", projection);
-        asteroid_shader.setMat("view", view);
+        const model = math.identity();
 
-        planet_shader.use();
-        planet_shader.setMat("projection", projection);
-        planet_shader.setMat("view", view);
+        shader.use();
+        shader.setMat("projection", projection);
+        shader.setMat("view", view);
+        shader.setMat("model", model);
 
-        var model = math.translation(0.0, -3.0, 0.0);
-        model = math.mul(math.scaling(4.0, 4.0, 4.0), model);
-        planet_shader.setMat("model", model);
-        planet.draw(planet_shader);
-
-        asteroid_shader.use();
-        asteroid_shader.seti32("texture_diffuse1", 0);
-        gl.bindTexture(.@"2d", rock.loaded_textures.items[0].texture);
-        for (rock.meshes.items) |mesh| {
-            gl.bindVertexArray(mesh.vao);
-            gl.drawElementsInstanced(.triangles, mesh.indices.len, .u32, 0, count);
-        }
+        gl.bindVertexArray(cube_vao);
+        gl.drawArrays(.triangles, 0, 36);
 
         try window.swapBuffers();
         try glfw.pollEvents();
