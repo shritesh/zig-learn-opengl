@@ -1451,6 +1451,25 @@ pub fn texImage2D(
     checkError();
 }
 
+pub fn texImage2DMultisample(
+    texture: TextureTarget,
+    samples: usize,
+    internal_format: PixelFormat,
+    width: usize,
+    height: usize,
+    fixed_sample_locations: bool,
+) void {
+    c.glTexImage2DMultisample(
+        @enumToInt(texture),
+        @intCast(SizeI, samples),
+        @enumToInt(internal_format),
+        @intCast(SizeI, width),
+        @intCast(SizeI, height),
+        b2gl(fixed_sample_locations),
+    );
+    checkError();
+}
+
 pub fn texSubImage2D(
     textureTarget: TextureTarget,
     level: usize,
@@ -1567,6 +1586,8 @@ pub fn scissor(x: i32, y: i32, width: usize, height: usize) void {
 
 pub const FramebufferTarget = enum(Enum) {
     framebuffer = c.GL_FRAMEBUFFER,
+    read_framebuffer = c.GL_READ_FRAMEBUFFER,
+    draw_fraembuffer = c.GL_DRAW_FRAMEBUFFER,
 };
 
 pub fn createFramebuffer() Framebuffer {
@@ -1697,6 +1718,51 @@ pub fn renderbufferStorage(target: RenderbufferTarget, internalformat: PixelForm
         @enumToInt(internalformat),
         @intCast(SizeI, width),
         @intCast(SizeI, height),
+    );
+    checkError();
+}
+
+pub fn renderbufferStorageMultisample(target: RenderbufferTarget, samples: usize, internalformat: PixelFormat, width: usize, height: usize) void {
+    c.glRenderbufferStorageMultisample(
+        @enumToInt(target),
+        @intCast(SizeI, samples),
+        @enumToInt(internalformat),
+        @intCast(SizeI, width),
+        @intCast(SizeI, height),
+    );
+    checkError();
+}
+
+pub const FramebufferBlitFilter = enum(Enum) {
+    nearest = c.GL_NEAREST,
+    linear = c.GL_LINEAR,
+};
+
+pub fn blitFramebuffer(
+    src_x0: u32,
+    src_y0: u32,
+    src_x1: u32,
+    src_y1: u32,
+    dst_x0: u32,
+    dst_y0: u32,
+    dst_x1: u32,
+    dst_y1: u32,
+    mask: struct { color: bool = false, depth: bool = false, stencil: bool = false },
+    filter: FramebufferBlitFilter,
+) void {
+    c.glBlitFramebuffer(
+        @intCast(Int, src_x0),
+        @intCast(Int, src_y0),
+        @intCast(Int, src_x1),
+        @intCast(Int, src_y1),
+        @intCast(Int, dst_x0),
+        @intCast(Int, dst_y0),
+        @intCast(Int, dst_x1),
+        @intCast(Int, dst_y1),
+        @as(BitField, if (mask.color) c.GL_COLOR_BUFFER_BIT else 0) |
+            @as(BitField, if (mask.depth) c.GL_DEPTH_BUFFER_BIT else 0) |
+            @as(BitField, if (mask.stencil) c.GL_STENCIL_BUFFER_BIT else 0),
+        @enumToInt(filter),
     );
     checkError();
 }
