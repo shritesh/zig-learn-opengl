@@ -78,17 +78,6 @@ pub fn clear(mask: struct { color: bool = false, depth: bool = false, stencil: b
 ///////////////////////////////////////////////////////////////////////////////
 // Vertex Arrays
 
-pub fn createVertexArrays(items: []VertexArray) void {
-    c.glCreateVertexArrays(cs2gl(items.len), @ptrCast([*]UInt, items.ptr));
-    checkError();
-}
-
-pub fn createVertexArray() VertexArray {
-    var vao: VertexArray = undefined;
-    createVertexArrays(@ptrCast([*]VertexArray, &vao)[0..1]);
-    return vao;
-}
-
 pub fn genVertexArrays(items: []VertexArray) void {
     c.glGenVertexArrays(cs2gl(items.len), @ptrCast([*]UInt, items.ptr));
     checkError();
@@ -128,16 +117,6 @@ pub fn disableVertexAttribArray(index: u32) void {
     checkError();
 }
 
-pub fn enableVertexArrayAttrib(vertexArray: VertexArray, index: u32) void {
-    c.glEnableVertexArrayAttrib(@enumToInt(vertexArray), index);
-    checkError();
-}
-
-pub fn disableVertexArrayAttrib(vertexArray: VertexArray, index: u32) void {
-    c.glDisableVertexArrayAttrib(@enumToInt(vertexArray), index);
-    checkError();
-}
-
 pub const Type = enum(Enum) {
     byte = c.GL_BYTE,
     short = c.GL_SHORT,
@@ -153,37 +132,6 @@ pub const Type = enum(Enum) {
     unsigned_int_2_10_10_10_rev = c.GL_UNSIGNED_INT_2_10_10_10_REV,
     unsigned_int_10_f_11_f_11_f_rev = c.GL_UNSIGNED_INT_10F_11F_11F_REV,
 };
-
-pub fn vertexAttribFormat(attribindex: u32, size: u32, attribute_type: Type, normalized: bool, relativeoffset: usize) void {
-    c.glVertexAttribFormat(
-        attribindex,
-        @intCast(Int, size),
-        @enumToInt(attribute_type),
-        b2gl(normalized),
-        ui2gl(relativeoffset),
-    );
-    checkError();
-}
-
-pub fn vertexAttribIFormat(attribindex: u32, size: u32, attribute_type: Type, relativeoffset: usize) void {
-    c.glVertexAttribIFormat(
-        attribindex,
-        @intCast(Int, size),
-        @enumToInt(attribute_type),
-        ui2gl(relativeoffset),
-    );
-    checkError();
-}
-
-pub fn vertexAttribLFormat(attribindex: u32, size: u32, attribute_type: Type, relativeoffset: usize) void {
-    c.glVertexAttribLFormat(
-        attribindex,
-        @intCast(Int, size),
-        @enumToInt(attribute_type),
-        ui2gl(relativeoffset),
-    );
-    checkError();
-}
 
 /// NOTE: if you use any integer type, it will cast to a floating point, you are probably looking for vertexAttribIPointer()
 pub fn vertexAttribPointer(attribindex: u32, size: u32, attribute_type: Type, normalized: bool, stride: usize, relativeoffset: usize) void {
@@ -206,84 +154,6 @@ pub fn vertexAttribIPointer(attribindex: u32, size: u32, attribute_type: Type, s
         cs2gl(stride),
         @intToPtr(*allowzero const anyopaque, relativeoffset),
     );
-    checkError();
-}
-
-pub fn vertexArrayAttribFormat(
-    vertexArray: VertexArray,
-    attribindex: u32,
-    size: u32,
-    attribute_type: Type,
-    normalized: bool,
-    relativeoffset: usize,
-) void {
-    c.glVertexArrayAttribFormat(
-        @enumToInt(vertexArray),
-        attribindex,
-        @intCast(Int, size),
-        @enumToInt(attribute_type),
-        b2gl(normalized),
-        ui2gl(relativeoffset),
-    );
-    checkError();
-}
-
-pub fn vertexArrayAttribIFormat(vertexArray: VertexArray, attribindex: u32, size: u32, attribute_type: Type, relativeoffset: usize) void {
-    c.glVertexArrayAttribIFormat(
-        @enumToInt(vertexArray),
-        attribindex,
-        @intCast(
-            Int,
-            size,
-        ),
-        @enumToInt(attribute_type),
-        ui2gl(relativeoffset),
-    );
-    checkError();
-}
-
-pub fn vertexArrayAttribLFormat(vertexArray: VertexArray, attribindex: u32, size: u32, attribute_type: Type, relativeoffset: usize) void {
-    c.glVertexArrayAttribLFormat(
-        @enumToInt(vertexArray),
-        attribindex,
-        @intCast(
-            Int,
-            size,
-        ),
-        @enumToInt(attribute_type),
-        @intCast(UInt, relativeoffset),
-    );
-    checkError();
-}
-
-pub fn vertexAttribBinding(attribindex: u32, bindingindex: u32) void {
-    c.glVertexAttribBinding(
-        attribindex,
-        bindingindex,
-    );
-    checkError();
-}
-pub fn vertexArrayAttribBinding(vertexArray: VertexArray, attribindex: u32, bindingindex: u32) void {
-    c.glVertexArrayAttribBinding(
-        @enumToInt(vertexArray),
-        attribindex,
-        bindingindex,
-    );
-    checkError();
-}
-
-pub fn bindVertexBuffer(bindingindex: u32, buffer: Buffer, offset: usize, stride: usize) void {
-    c.glBindVertexBuffer(bindingindex, @enumToInt(buffer), cs2gl(offset), cs2gl(stride));
-    checkError();
-}
-
-pub fn vertexArrayVertexBuffer(vertexArray: VertexArray, bindingindex: u32, buffer: Buffer, offset: usize, stride: usize) void {
-    c.glVertexArrayVertexBuffer(@enumToInt(vertexArray), bindingindex, @enumToInt(buffer), cs2gl(offset), cs2gl(stride));
-    checkError();
-}
-
-pub fn vertexArrayElementBuffer(vertexArray: VertexArray, buffer: Buffer) void {
-    c.glVertexArrayElementBuffer(@enumToInt(vertexArray), @enumToInt(buffer));
     checkError();
 }
 
@@ -312,17 +182,6 @@ pub const BufferTarget = enum(Enum) {
     /// Uniform block storage
     uniform_buffer = c.GL_UNIFORM_BUFFER,
 };
-
-pub fn createBuffers(items: []Buffer) void {
-    c.glCreateBuffers(cs2gl(items.len), @ptrCast([*]UInt, items.ptr));
-    checkError();
-}
-
-pub fn createBuffer() Buffer {
-    var buf: Buffer = undefined;
-    createBuffers(@ptrCast([*]Buffer, &buf)[0..1]);
-    return buf;
-}
 
 pub fn genBuffers(items: []Buffer) void {
     c.glGenBuffers(cs2gl(items.len), @ptrCast([*]UInt, items.ptr));
@@ -364,27 +223,6 @@ pub const BufferUsage = enum(Enum) {
     dynamic_copy = c.GL_DYNAMIC_COPY,
 };
 
-// using align(1) as we are not required to have aligned data here
-pub fn namedBufferData(buf: Buffer, comptime T: type, items: []align(1) const T, usage: BufferUsage) void {
-    c.glNamedBufferData(
-        @enumToInt(buf),
-        cs2gl(@sizeOf(T) * items.len),
-        items.ptr,
-        @enumToInt(usage),
-    );
-    checkError();
-}
-
-pub fn namedBufferUninitialized(buf: Buffer, comptime T: type, count: usize, usage: BufferUsage) void {
-    c.glNamedBufferData(
-        @enumToInt(buf),
-        cs2gl(@sizeOf(T) * count),
-        null,
-        @enumToInt(usage),
-    );
-    checkError();
-}
-
 pub fn bufferData(target: BufferTarget, comptime T: type, items: []align(1) const T, usage: BufferUsage) void {
     c.glBufferData(
         @enumToInt(target),
@@ -407,33 +245,6 @@ pub fn bufferUninitialized(target: BufferTarget, comptime T: type, count: usize,
 
 pub fn bufferSubData(target: BufferTarget, offset: usize, comptime T: type, items: []align(1) const T) void {
     c.glBufferSubData(@enumToInt(target), cs2gl(offset), cs2gl(@sizeOf(T) * items.len), items.ptr);
-    checkError();
-}
-
-pub const BufferStorageFlags = packed struct {
-    dynamic_storage: bool = false,
-    map_read: bool = false,
-    map_write: bool = false,
-    map_persistent: bool = false,
-    map_coherent: bool = false,
-    client_storage: bool = false,
-};
-
-pub fn namedBufferStorage(buf: Buffer, comptime T: type, count: usize, items: ?[*]align(1) const T, flags: BufferStorageFlags) void {
-    var flag_bits: c.GLbitfield = 0;
-    if (flags.dynamic_storage) flag_bits |= c.GL_DYNAMIC_STORAGE_BIT;
-    if (flags.map_read) flag_bits |= c.GL_MAP_READ_BIT;
-    if (flags.map_write) flag_bits |= c.GL_MAP_WRITE_BIT;
-    if (flags.map_persistent) flag_bits |= c.GL_MAP_PERSISTENT_BIT;
-    if (flags.map_coherent) flag_bits |= c.GL_MAP_COHERENT_BIT;
-    if (flags.client_storage) flag_bits |= c.GL_CLIENT_STORAGE_BIT;
-
-    c.glNamedBufferStorage(
-        @enumToInt(buf),
-        cs2gl(@sizeOf(T) * count),
-        items,
-        flag_bits,
-    );
     checkError();
 }
 
@@ -478,44 +289,6 @@ pub fn unmapBuffer(target: BufferMapTarget) bool {
     const ok = c.glUnmapBuffer(@enumToInt(target));
     checkError();
     return ok == c.GL_TRUE;
-}
-
-pub const BufferMapFlags = packed struct {
-    read: bool = false,
-    write: bool = false,
-    persistent: bool = false,
-    coherent: bool = false,
-};
-
-pub fn mapNamedBufferRange(
-    buf: Buffer,
-    comptime T: type,
-    offset: usize,
-    count: usize,
-    flags: BufferMapFlags,
-) []align(1) T {
-    var flag_bits: c.GLbitfield = 0;
-    if (flags.read) flag_bits |= c.GL_MAP_READ_BIT;
-    if (flags.write) flag_bits |= c.GL_MAP_WRITE_BIT;
-    if (flags.persistent) flag_bits |= c.GL_MAP_PERSISTENT_BIT;
-    if (flags.coherent) flag_bits |= c.GL_MAP_COHERENT_BIT;
-
-    const ptr = c.glMapNamedBufferRange(
-        @enumToInt(buf),
-        @intCast(c.GLintptr, offset),
-        @intCast(c.GLsizeiptr, @sizeOf(T) * count),
-        flag_bits,
-    );
-    checkError();
-
-    const values = @ptrCast([*]align(1) T, ptr);
-    return values[0..count];
-}
-
-pub fn unmapNamedBuffer(buf: Buffer) bool {
-    const ok = c.glUnmapNamedBuffer(@enumToInt(buf));
-    checkError();
-    return ok != 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1159,20 +932,6 @@ pub fn genTexture() Texture {
     return @intToEnum(Texture, tex_name);
 }
 
-pub fn createTexture(texture_target: TextureTarget) Texture {
-    var tex_name: UInt = undefined;
-
-    c.glCreateTextures(@enumToInt(texture_target), 1, &tex_name);
-    checkError();
-
-    const texture = @intToEnum(Texture, tex_name);
-    if (texture == .none) {
-        checkError();
-        unreachable;
-    }
-    return texture;
-}
-
 pub fn deleteTexture(texture: Texture) void {
     var id = @enumToInt(texture);
     c.glDeleteTextures(1, &id);
@@ -1180,16 +939,6 @@ pub fn deleteTexture(texture: Texture) void {
 
 pub fn generateMipmap(target: TextureTarget) void {
     c.glGenerateMipmap(@enumToInt(target));
-    checkError();
-}
-
-pub fn generateTextureMipmap(texture: Texture) void {
-    c.glGenerateTextureMipmap(@enumToInt(texture));
-    checkError();
-}
-
-pub fn bindTextureUnit(texture: Texture, unit: u32) void {
-    c.glBindTextureUnit(unit, @enumToInt(texture));
     checkError();
 }
 
@@ -1272,18 +1021,6 @@ pub fn texParameter(target: TextureTarget, comptime parameter: TextureParameter,
     checkError();
 }
 
-pub fn textureParameter(texture: Texture, comptime parameter: TextureParameter, value: TextureParameterType(parameter)) void {
-    const T = TextureParameterType(parameter);
-    const info = @typeInfo(T);
-
-    if (info == .Enum) {
-        c.glTextureParameteri(@enumToInt(texture), @enumToInt(parameter), @enumToInt(value));
-    } else {
-        @compileError(@tagName(info) ++ " is not supported yet by textureParameter");
-    }
-    checkError();
-}
-
 pub const TextureInternalFormat = enum(Enum) {
     r8 = c.GL_R8,
     r8_snorm = c.GL_R8_SNORM,
@@ -1348,42 +1085,6 @@ pub const TextureInternalFormat = enum(Enum) {
     rgba32ui = c.GL_RGBA32UI,
     depth_component16 = c.GL_DEPTH_COMPONENT16,
 };
-
-pub fn textureStorage2D(
-    texture: Texture,
-    levels: usize,
-    internalformat: TextureInternalFormat,
-    width: usize,
-    height: usize,
-) void {
-    c.glTextureStorage2D(
-        @enumToInt(texture),
-        @intCast(SizeI, levels),
-        @enumToInt(internalformat),
-        @intCast(SizeI, width),
-        @intCast(SizeI, height),
-    );
-    checkError();
-}
-
-pub fn textureStorage3D(
-    texture: Texture,
-    levels: usize,
-    internalformat: TextureInternalFormat,
-    width: usize,
-    height: usize,
-    depth: usize,
-) void {
-    c.glTextureStorage3D(
-        @enumToInt(texture),
-        @intCast(SizeI, levels),
-        @enumToInt(internalformat),
-        @intCast(SizeI, width),
-        @intCast(SizeI, height),
-        @intCast(SizeI, depth),
-    );
-    checkError();
-}
 
 pub const PixelFormat = enum(Enum) {
     red = c.GL_RED,
@@ -1495,60 +1196,6 @@ pub fn texSubImage2D(
     checkError();
 }
 
-pub fn textureSubImage2D(
-    texture: Texture,
-    level: usize,
-    xoffset: usize,
-    yoffset: usize,
-    width: usize,
-    height: usize,
-    pixel_format: PixelFormat,
-    pixel_type: PixelType,
-    data: ?[*]const u8,
-) void {
-    c.glTextureSubImage2D(
-        @enumToInt(texture),
-        @intCast(Int, level),
-        @intCast(Int, xoffset),
-        @intCast(Int, yoffset),
-        @intCast(SizeI, width),
-        @intCast(SizeI, height),
-        @enumToInt(pixel_format),
-        @enumToInt(pixel_type),
-        data,
-    );
-    checkError();
-}
-
-pub fn textureSubImage3D(
-    texture: Texture,
-    level: usize,
-    xoffset: usize,
-    yoffset: usize,
-    zoffset: usize,
-    width: usize,
-    height: usize,
-    depth: usize,
-    pixel_format: PixelFormat,
-    pixel_type: PixelType,
-    pixels: ?[*]const u8,
-) void {
-    c.glTextureSubImage3D(
-        @enumToInt(texture),
-        @intCast(Int, level),
-        @intCast(Int, xoffset),
-        @intCast(Int, yoffset),
-        @intCast(Int, zoffset),
-        @intCast(SizeI, width),
-        @intCast(SizeI, height),
-        @intCast(SizeI, depth),
-        @enumToInt(pixel_format),
-        @enumToInt(pixel_type),
-        pixels,
-    );
-    checkError();
-}
-
 pub const PixelStoreParameter = enum(Enum) {
     pack_swap_bytes = c.GL_PACK_SWAP_BYTES,
     pack_lsb_first = c.GL_PACK_LSB_FIRST,
@@ -1589,18 +1236,6 @@ pub const FramebufferTarget = enum(Enum) {
     read_framebuffer = c.GL_READ_FRAMEBUFFER,
     draw_fraembuffer = c.GL_DRAW_FRAMEBUFFER,
 };
-
-pub fn createFramebuffer() Framebuffer {
-    var fb_name: UInt = undefined;
-    c.glCreateFramebuffers(1, &fb_name);
-    checkError();
-    const framebuffer = @intToEnum(Framebuffer, fb_name);
-    if (framebuffer == .none) {
-        checkError();
-        unreachable;
-    }
-    return framebuffer;
-}
 
 pub fn genFramebuffer() Framebuffer {
     var fb_name: UInt = undefined;
